@@ -4,6 +4,7 @@ import * as THREE from "three";
 import Floor from "./Floor";
 import Lighting from "./Lighting";
 import Zones from "./Zones";
+import ZoneDecorations from "./ZoneDecorations";
 import AgentCharacters from "./AgentCharacters";
 import AgentConnections from "./AgentConnections";
 import CameraController from "./CameraController";
@@ -23,8 +24,8 @@ function SceneContent() {
       {/* Camera controller — handles presets, agent focus, cinematic orbit */}
       <CameraController />
 
-      {/* Very subtle fog — pushed far out for massive layout */}
-      <fog attach="fog" args={["#1a1820", 180, 500]} />
+      {/* Very subtle fog */}
+      <fog attach="fog" args={["#1a1820", 120, 350]} />
 
       {/* Lighting rig */}
       <Lighting />
@@ -34,6 +35,9 @@ function SceneContent() {
 
       {/* 7 Department Zone Platforms — rectangular layout */}
       <Zones />
+
+      {/* Themed decorations for each agent's workspace */}
+      <ZoneDecorations />
 
       {/* 7 Animated Character Models — standing in their zones */}
       <AgentCharacters />
@@ -61,10 +65,10 @@ export default function Scene() {
         toneMappingExposure: 1.5,
       }}
       camera={{
-        position: [120, 85, 120],
+        position: [85, 65, 85],
         fov: 45,
         near: 0.1,
-        far: 600,
+        far: 400,
       }}
       style={{ position: "absolute", top: 0, left: 0 }}
     >

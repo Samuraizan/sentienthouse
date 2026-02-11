@@ -82,8 +82,9 @@ export default function AgentCharacters() {
         status: agent.status,
         agentColor: agent.color,
         agentName: agent.name,
-        agentRole: zone.label,
-        currentTask: agent.currentTask, // Pass real task from backend
+        agentRoleLabel: zone.label,
+        agentRole: agent.role, // Pass role key for interaction lookups
+        currentTask: agent.currentTask,
       });
     });
 
@@ -98,6 +99,7 @@ export default function AgentCharacters() {
           agentId={char.agentId}
           agentName={char.agentName}
           agentRole={char.agentRole}
+          agentRoleLabel={char.agentRoleLabel}
           modelPath={char.modelPath}
           position={char.position}
           zoneSize={char.zoneSize}

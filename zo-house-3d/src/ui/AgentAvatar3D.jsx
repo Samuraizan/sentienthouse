@@ -70,8 +70,8 @@ function CharacterModel({ modelPath, agentColor, autoRotate = true }) {
   });
 
   return (
-    <group ref={groupRef} position={[0, -2.5, 0]}>
-      <primitive object={clonedScene} scale={[2.8, 2.8, 2.8]} />
+    <group ref={groupRef} position={[0, -1.8, 0]}>
+      <primitive object={clonedScene} scale={[2.0, 2.0, 2.0]} />
     </group>
   );
 }
@@ -124,8 +124,8 @@ export default function AgentAvatar3D({
     >
       <Canvas
         camera={{
-          position: [0, 2, 8],
-          fov: 35,
+          position: [0, 1.5, 7],
+          fov: 32,
           near: 0.1,
           far: 100,
         }}

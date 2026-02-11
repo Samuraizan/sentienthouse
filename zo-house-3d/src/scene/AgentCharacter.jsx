@@ -6,19 +6,19 @@ import * as THREE from "three";
 import useAgentStore from "../store/agentStore";
 
 /**
- * AgentCharacter.jsx — Game-like AI agent simulation
+ * AgentCharacter.jsx — Sentient AI agent with natural workspace interactions
  *
- * Agents work, collaborate, think, celebrate, and grind 24/7 like characters
- * in a simulation game, but doing actual Zo House work.
+ * Agents interact with objects in their zone, wander naturally, and visit
+ * other agents for work-related collaboration.
  *
  * Behaviors:
- *   - 💻 Working: Typing at their station, processing tasks
- *   - 🤔 Thinking: Pondering, problem-solving
- *   - 🎉 Celebrating: Task complete celebrations
- *   - ☕ Break: Quick coffee/stretch break
- *   - 🚶 Wandering: Moving around their zone
- *   - 🏃 Traveling: Running to meet another agent
- *   - 💬 Meeting: Collaborating with another agent
+ *   - 💻 Working at desk/station
+ *   - 🎵 Using zone-specific equipment (turntable, presentation board, etc.)
+ *   - 🤔 Thinking/planning
+ *   - 🚶 Walking around zone
+ *   - 🏃 Visiting other agents
+ *   - 💬 Collaborating in meetings
+ *   - 🎉 Celebrating completions
  */
 
 // ── Animation helpers ──────────────────────────────────────────────
@@ -31,7 +31,6 @@ function findAction(actions, ...names) {
   return null;
 }
 
-// Animation sets
 const WALK_ANIMS = ["Walking_A", "Walking_B", "Walk"];
 const RUN_ANIMS = ["Running_A", "Running_B", "Run"];
 const IDLE_ANIMS = ["Idle"];
@@ -39,40 +38,104 @@ const WAVE_ANIMS = ["Wave"];
 const INTERACT_ANIMS = ["Interact", "PickUp"];
 const CHEER_ANIMS = ["Cheer", "Jump"];
 
-// Game-like work activities
-const WORK_ACTIVITIES = [
-  { text: "Processing requests...", emoji: "⚡", duration: [8, 15] },
-  { text: "Analyzing data...", emoji: "📊", duration: [6, 12] },
-  { text: "Sending messages...", emoji: "💬", duration: [4, 8] },
-  { text: "Updating systems...", emoji: "🔄", duration: [5, 10] },
-  { text: "Writing responses...", emoji: "✍️", duration: [6, 12] },
-  { text: "Reviewing tasks...", emoji: "📋", duration: [4, 8] },
-  { text: "Syncing channels...", emoji: "📡", duration: [3, 6] },
-  { text: "Optimizing workflow...", emoji: "⚙️", duration: [5, 10] },
-];
+// ── Zone-specific interaction points ───────────────────────────────
+// Relative to zone center - where agents go to interact with objects
+const ZONE_INTERACTIONS = {
+  director: [
+    { id: "podium", offset: [0, 0, -5], activity: "Commanding operations", emoji: "👑", duration: [8, 15] },
+    { id: "desk", offset: [10, 0, 5], activity: "Reviewing reports", emoji: "📊", duration: [10, 18] },
+    { id: "orb1", offset: [-8, 0, 8], activity: "Monitoring systems", emoji: "🔮", duration: [5, 10] },
+    { id: "plant", offset: [-12, 0, 12], activity: "Quick break", emoji: "🌿", duration: [3, 6] },
+  ],
+  "captain-blrxzo": [
+    { id: "desk", offset: [0, 0, -8], activity: "Managing Bangalore ops", emoji: "🏠", duration: [10, 18] },
+    { id: "welcome", offset: [0, 0, 10], activity: "Greeting guests", emoji: "👋", duration: [4, 8] },
+    { id: "plant1", offset: [-10, 0, 10], activity: "Checking property", emoji: "🔍", duration: [5, 10] },
+    { id: "plant2", offset: [10, 0, 8], activity: "Inspecting area", emoji: "✅", duration: [4, 8] },
+  ],
+  "captain-wtfxzo": [
+    { id: "desk", offset: [0, 0, -8], activity: "Managing Goa ops", emoji: "🏠", duration: [10, 18] },
+    { id: "welcome", offset: [0, 0, 10], activity: "Greeting guests", emoji: "👋", duration: [4, 8] },
+    { id: "plant1", offset: [-10, 0, 10], activity: "Property walkthrough", emoji: "🚶", duration: [5, 10] },
+    { id: "plant2", offset: [10, 0, 8], activity: "Maintenance check", emoji: "🔧", duration: [4, 8] },
+  ],
+  events: [
+    { id: "stage", offset: [0, 0, -6], activity: "Planning event setup", emoji: "🎪", duration: [8, 15] },
+    { id: "disco", offset: [0, 0, 0], activity: "Testing lights", emoji: "✨", duration: [5, 10] },
+    { id: "speaker1", offset: [-10, 0, 5], activity: "Sound check", emoji: "🔊", duration: [6, 12] },
+    { id: "speaker2", offset: [10, 0, 5], activity: "Audio testing", emoji: "🎵", duration: [6, 12] },
+  ],
+  "vibe-curator": [
+    { id: "turntable", offset: [-5, 0, 0], activity: "Mixing tracks", emoji: "🎧", duration: [10, 20] },
+    { id: "neon", offset: [0, 0, -10], activity: "Setting mood", emoji: "💜", duration: [5, 10] },
+    { id: "speaker1", offset: [-10, 0, -5], activity: "Tuning bass", emoji: "🔈", duration: [6, 12] },
+    { id: "speaker2", offset: [10, 0, -5], activity: "Adjusting treble", emoji: "🎶", duration: [6, 12] },
+  ],
+  sales: [
+    { id: "board", offset: [0, 0, -8], activity: "Updating pipeline", emoji: "📈", duration: [8, 15] },
+    { id: "desk1", offset: [-8, 0, 5], activity: "Cold calling", emoji: "📞", duration: [10, 18] },
+    { id: "desk2", offset: [8, 0, 5], activity: "Sending proposals", emoji: "📧", duration: [8, 15] },
+    { id: "plant", offset: [-12, 0, -8], activity: "Quick stretch", emoji: "🧘", duration: [3, 6] },
+  ],
+  bd: [
+    { id: "table", offset: [0, 0, 2], activity: "Partner meeting prep", emoji: "🤝", duration: [8, 15] },
+    { id: "globe", offset: [10, 0, -8], activity: "Researching markets", emoji: "🌍", duration: [10, 18] },
+    { id: "board", offset: [-10, 0, -6], activity: "Deal analysis", emoji: "📊", duration: [8, 15] },
+    { id: "plant", offset: [-12, 0, 8], activity: "Coffee break", emoji: "☕", duration: [3, 6] },
+  ],
+};
 
-const THINKING_ACTIVITIES = [
-  { text: "Thinking...", emoji: "🤔" },
-  { text: "Planning next move...", emoji: "🎯" },
-  { text: "Processing...", emoji: "💭" },
-  { text: "Strategizing...", emoji: "🧠" },
-];
+// ── Work-related visit reasons ─────────────────────────────────────
+const VISIT_REASONS = {
+  director: {
+    "captain-blrxzo": ["Bangalore status update", "Property metrics review", "Guest feedback"],
+    "captain-wtfxzo": ["Goa status update", "House performance check", "Staff coordination"],
+    events: ["Event calendar sync", "Venue requirements", "Budget approval"],
+    "vibe-curator": ["Atmosphere check", "Music curation review", "Guest experience"],
+    sales: ["Pipeline review", "Revenue targets", "Lead quality check"],
+    bd: ["Partnership updates", "Deal pipeline", "Strategic planning"],
+  },
+  "captain-blrxzo": {
+    director: ["Reporting metrics", "Escalation", "Resource request"],
+    events: ["Event coordination", "Space booking", "Setup planning"],
+    "vibe-curator": ["Atmosphere request", "Music for event", "Guest preferences"],
+    sales: ["Lead handoff", "Guest inquiry", "Booking confirmation"],
+  },
+  "captain-wtfxzo": {
+    director: ["Reporting metrics", "Escalation", "Approval needed"],
+    events: ["Event coordination", "Venue prep", "Catering sync"],
+    "vibe-curator": ["Vibe check", "Party planning", "Music selection"],
+    sales: ["Guest leads", "Inquiry response", "Booking update"],
+  },
+  events: {
+    director: ["Event approval", "Budget review", "Schedule confirmation"],
+    "captain-blrxzo": ["Venue walkthrough", "Setup coordination", "Timing sync"],
+    "captain-wtfxzo": ["Space requirements", "Equipment needs", "Staff briefing"],
+    "vibe-curator": ["Music planning", "Atmosphere design", "Theme coordination"],
+    sales: ["Event leads", "Corporate inquiries", "Package details"],
+    bd: ["Partner events", "Sponsorship", "Co-hosted events"],
+  },
+  "vibe-curator": {
+    director: ["Creative direction", "Brand alignment", "Feedback session"],
+    events: ["Event playlist", "Sound setup", "Lighting design"],
+    "captain-blrxzo": ["House vibes", "Guest playlist", "Atmosphere update"],
+    "captain-wtfxzo": ["Party prep", "Music schedule", "Mood setting"],
+  },
+  sales: {
+    director: ["Pipeline review", "Target updates", "Deal support"],
+    events: ["Event packages", "Corporate leads", "Booking coordination"],
+    bd: ["Partner leads", "Cross-sell opps", "Deal collaboration"],
+    "captain-blrxzo": ["Guest inquiries", "Availability check", "Special requests"],
+    "captain-wtfxzo": ["Booking requests", "Rate discussion", "Promo coordination"],
+  },
+  bd: {
+    director: ["Deal approval", "Partnership strategy", "Resource allocation"],
+    events: ["Partner events", "Sponsorship deals", "Co-marketing"],
+    sales: ["Lead sharing", "Deal support", "Pipeline sync"],
+  },
+};
 
-const BREAK_ACTIVITIES = [
-  { text: "Quick break", emoji: "☕" },
-  { text: "Stretching", emoji: "🧘" },
-  { text: "Recharging", emoji: "🔋" },
-];
-
-const CELEBRATION_MESSAGES = [
-  "+1 Task Complete! 🎉",
-  "Nailed it! ✨",
-  "Mission success! 🚀",
-  "Done & dusted! ✅",
-  "Another one! 💪",
-];
-
-// Status-based activity (higher = more work)
+// ── Status activity levels ─────────────────────────────────────────
 const STATUS_ACTIVITY = {
   active: 1.0,
   idle: 0.4,
@@ -82,16 +145,11 @@ const STATUS_ACTIVITY = {
   offline: 0.02,
 };
 
-// Movement speeds
-const WALK_SPEED = 2.0;
-const RUN_SPEED = 5.5;
-
-// Behavior timings (seconds)
-const WORK_CHANCE = 0.6;        // Chance to start working vs other activity
-const VISIT_INTERVAL = [20, 50]; // Time between visits
-const MEETING_DURATION = [5, 10]; // How long meetings last
-
+const WALK_SPEED = 2.5;
+const RUN_SPEED = 6.0;
 const CROSSFADE_DURATION = 0.25;
+
+// ── Main Component ─────────────────────────────────────────────────
 
 function AgentCharacter({
   modelPath,
@@ -102,16 +160,16 @@ function AgentCharacter({
   agentId = "",
   agentName = "",
   agentRole = "",
+  agentRoleLabel = "",
   isSelected = false,
   onSelect = null,
   agentColor = "#8888ff",
   allAgentPositions = {},
-  currentTask = null, // Real task from the backend
+  currentTask = null,
 }) {
   const groupRef = useRef();
   const characterRef = useRef();
   const selectionRingRef = useRef();
-  const selectionGlowRef = useRef();
   const currentActionRef = useRef(null);
   const [hovered, setHovered] = useState(false);
 
@@ -122,42 +180,36 @@ function AgentCharacter({
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationText, setCelebrationText] = useState("");
   const [tasksCompleted, setTasksCompleted] = useState(0);
+  const [visitReason, setVisitReason] = useState("");
 
   // Store actions
   const startVisit = useAgentStore((s) => s.startVisit);
   const startMeeting = useAgentStore((s) => s.startMeeting);
   const endVisit = useAgentStore((s) => s.endVisit);
 
+  // Get zone interactions for this agent's role
+  const zoneInteractions = useMemo(() => {
+    return ZONE_INTERACTIONS[agentRole] || ZONE_INTERACTIONS.director;
+  }, [agentRole]);
+
   // Agent state machine
   const stateRef = useRef({
-    // Position tracking
     currentPos: new THREE.Vector3(position[0], position[1], position[2]),
     targetPos: new THREE.Vector3(position[0], position[1], position[2]),
     homePos: new THREE.Vector3(position[0], position[1], position[2]),
-    workStationPos: new THREE.Vector3(
-      position[0] + (Math.random() - 0.5) * 2,
-      position[1],
-      position[2] + (Math.random() - 0.5) * 2
-    ),
     currentRotation: 0,
     targetRotation: 0,
 
-    // Behavior state
-    mode: "idle", // idle | working | thinking | celebrating | break | wandering | traveling | meeting | returning
+    mode: "idle",
     isMoving: false,
     moveSpeed: WALK_SPEED,
 
-    // Timers
-    activityEndTime: 0,
+    activityEndTime: Date.now() + 2000,
     nextActivityTime: Date.now() + Math.random() * 3000 + 1000,
-    nextVisitTime: Date.now() + Math.random() * 20000 + 10000,
-    celebrationEndTime: 0,
+    nextVisitTime: Date.now() + Math.random() * 25000 + 15000,
 
-    // Visit tracking
     visitingAgentId: null,
-    meetingWithAgentId: null,
-
-    // Work stats
+    currentInteraction: null,
     workSessionsToday: 0,
   });
 
@@ -167,8 +219,8 @@ function AgentCharacter({
 
   // Zone boundaries
   const zoneBounds = useMemo(() => {
-    const halfW = (zoneSize[0] / 2) - 1.5;
-    const halfD = (zoneSize[1] / 2) - 1.5;
+    const halfW = (zoneSize[0] / 2) - 2;
+    const halfD = (zoneSize[1] / 2) - 2;
     return {
       minX: position[0] - halfW,
       maxX: position[0] + halfW,
@@ -177,7 +229,7 @@ function AgentCharacter({
     };
   }, [position, zoneSize]);
 
-  // Parse colors
+  // Colors
   const tintColor = useMemo(() => (color ? new THREE.Color(color) : null), [color]);
   const ringBrightColor = useMemo(() => {
     const c = new THREE.Color(agentColor);
@@ -185,7 +237,7 @@ function AgentCharacter({
     return c;
   }, [agentColor]);
 
-  // ── Apply color tint ─────────────────────────────────────────────
+  // ── Visual setup effects ─────────────────────────────────────────
   useEffect(() => {
     clonedScene.traverse((child) => {
       if (child.isSkinnedMesh || child.isMesh) {
@@ -200,7 +252,6 @@ function AgentCharacter({
     });
   }, [clonedScene, tintColor]);
 
-  // ── Status-based visual effects ──────────────────────────────────
   useEffect(() => {
     const isActive = status === "active" || status === "online";
     const isOffline = status === "offline";
@@ -208,7 +259,6 @@ function AgentCharacter({
       if (child.isSkinnedMesh || child.isMesh) {
         if (!child.material._originalColor) {
           child.material._originalColor = child.material.color?.clone() || new THREE.Color(1, 1, 1);
-          child.material._originalEmissive = child.material.emissive?.clone() || new THREE.Color(0, 0, 0);
         }
         if (isActive) {
           child.material.emissive = tintColor ? tintColor.clone().multiplyScalar(0.3) : new THREE.Color(0.15, 0.15, 0.3);
@@ -227,7 +277,6 @@ function AgentCharacter({
     });
   }, [clonedScene, status, tintColor]);
 
-  // ── Enable shadows ───────────────────────────────────────────────
   useEffect(() => {
     clonedScene.traverse((child) => {
       if (child.isMesh || child.isSkinnedMesh) {
@@ -275,7 +324,6 @@ function AgentCharacter({
     mixer.addEventListener("finished", onFinished);
   }, [actions, mixer]);
 
-  // ── Movement helpers ─────────────────────────────────────────────
   const startWalk = useCallback(() => {
     const walkAction = findAction(actions, ...WALK_ANIMS);
     if (walkAction) crossFadeTo(walkAction, 0.2, 1.0);
@@ -293,90 +341,56 @@ function AgentCharacter({
     if (idleAction) crossFadeTo(idleAction, 0.3, 0.8);
   }, [actions, crossFadeTo]);
 
-  // ── Game Behaviors ───────────────────────────────────────────────
-
-  // Start working at station
-  const startWorking = useCallback(() => {
+  // ── Behavior: Go to interaction point ────────────────────────────
+  const goToInteraction = useCallback((interaction) => {
     const s = stateRef.current;
-    const activity = WORK_ACTIVITIES[Math.floor(Math.random() * WORK_ACTIVITIES.length)];
-    const duration = activity.duration[0] + Math.random() * (activity.duration[1] - activity.duration[0]);
+    const targetX = position[0] + interaction.offset[0];
+    const targetZ = position[2] + interaction.offset[2];
 
-    // Use real task if available
-    const displayText = currentTask || activity.text;
+    s.targetPos.set(targetX, position[1], targetZ);
+    s.mode = "goingToInteraction";
+    s.isMoving = true;
+    s.currentInteraction = interaction;
 
-    s.mode = "working";
+    setCurrentMode("walking");
+    setActivityText(`Going to ${interaction.id}...`);
+    setActivityEmoji("🚶");
+
+    const dx = targetX - s.currentPos.x;
+    const dz = targetZ - s.currentPos.z;
+    s.targetRotation = Math.atan2(dx, dz);
+
+    startWalk();
+  }, [position, startWalk]);
+
+  // ── Behavior: Start interacting with object ──────────────────────
+  const startInteracting = useCallback(() => {
+    const s = stateRef.current;
+    const interaction = s.currentInteraction;
+    if (!interaction) return;
+
+    const duration = interaction.duration[0] + Math.random() * (interaction.duration[1] - interaction.duration[0]);
+
+    s.mode = "interacting";
     s.activityEndTime = Date.now() + duration * 1000;
     s.isMoving = false;
     s.workSessionsToday++;
 
     setCurrentMode("working");
-    setActivityText(displayText);
-    setActivityEmoji(activity.emoji);
+    setActivityText(interaction.activity);
+    setActivityEmoji(interaction.emoji);
 
-    // Typing animation (use interact/idle mix)
-    const idleAction = findAction(actions, ...IDLE_ANIMS);
-    if (idleAction) crossFadeTo(idleAction, 0.3, 0.6); // Slower idle = focused work
-  }, [currentTask, actions, crossFadeTo]);
-
-  // Start thinking
-  const startThinking = useCallback(() => {
-    const s = stateRef.current;
-    const thought = THINKING_ACTIVITIES[Math.floor(Math.random() * THINKING_ACTIVITIES.length)];
-
-    s.mode = "thinking";
-    s.activityEndTime = Date.now() + (3000 + Math.random() * 4000);
-    s.isMoving = false;
-
-    setCurrentMode("thinking");
-    setActivityText(thought.text);
-    setActivityEmoji(thought.emoji);
+    // Face the object (towards zone center for most)
+    const dx = position[0] - s.currentPos.x;
+    const dz = position[2] - s.currentPos.z;
+    if (Math.abs(dx) > 0.5 || Math.abs(dz) > 0.5) {
+      s.targetRotation = Math.atan2(dx, dz);
+    }
 
     startIdle();
+  }, [position, startIdle]);
 
-    // Look around while thinking
-    s.targetRotation += (Math.random() - 0.5) * Math.PI * 0.5;
-  }, [startIdle]);
-
-  // Take a break
-  const startBreak = useCallback(() => {
-    const s = stateRef.current;
-    const breakType = BREAK_ACTIVITIES[Math.floor(Math.random() * BREAK_ACTIVITIES.length)];
-
-    s.mode = "break";
-    s.activityEndTime = Date.now() + (2000 + Math.random() * 3000);
-    s.isMoving = false;
-
-    setCurrentMode("break");
-    setActivityText(breakType.text);
-    setActivityEmoji(breakType.emoji);
-
-    // Stretch animation
-    playOneShot(INTERACT_ANIMS, startIdle);
-  }, [playOneShot, startIdle]);
-
-  // Celebrate task completion
-  const celebrate = useCallback(() => {
-    const s = stateRef.current;
-    const message = CELEBRATION_MESSAGES[Math.floor(Math.random() * CELEBRATION_MESSAGES.length)];
-
-    s.mode = "celebrating";
-    s.activityEndTime = Date.now() + 2500;
-
-    setCurrentMode("celebrating");
-    setShowCelebration(true);
-    setCelebrationText(message);
-    setTasksCompleted((prev) => prev + 1);
-
-    playOneShot(CHEER_ANIMS, () => {
-      setShowCelebration(false);
-      startIdle();
-    });
-
-    // Clear celebration after animation
-    setTimeout(() => setShowCelebration(false), 2500);
-  }, [playOneShot, startIdle]);
-
-  // Wander around zone
+  // ── Behavior: Random wander ──────────────────────────────────────
   const startWandering = useCallback(() => {
     const s = stateRef.current;
     const targetX = zoneBounds.minX + Math.random() * (zoneBounds.maxX - zoneBounds.minX);
@@ -386,9 +400,9 @@ function AgentCharacter({
     s.mode = "wandering";
     s.isMoving = true;
 
-    setCurrentMode("wandering");
-    setActivityText("");
-    setActivityEmoji("");
+    setCurrentMode("walking");
+    setActivityText("Walking around");
+    setActivityEmoji("🚶");
 
     const dx = targetX - s.currentPos.x;
     const dz = targetZ - s.currentPos.z;
@@ -397,7 +411,7 @@ function AgentCharacter({
     startWalk();
   }, [zoneBounds, position, startWalk]);
 
-  // Visit another agent
+  // ── Behavior: Visit another agent ────────────────────────────────
   const visitAgent = useCallback((targetAgentId) => {
     const targetInfo = allAgentPositions[targetAgentId];
     if (!targetInfo) return;
@@ -405,21 +419,22 @@ function AgentCharacter({
     const s = stateRef.current;
     const [tx, ty, tz] = targetInfo.position;
 
-    const offset = 2.5;
+    // Get visit reason
+    const reasons = VISIT_REASONS[agentRole]?.[targetAgentId] || ["Quick sync", "Collaboration", "Update"];
+    const reason = reasons[Math.floor(Math.random() * reasons.length)];
+
+    const offset = 3;
     const angle = Math.random() * Math.PI * 2;
-    s.targetPos.set(
-      tx + Math.cos(angle) * offset,
-      ty,
-      tz + Math.sin(angle) * offset
-    );
+    s.targetPos.set(tx + Math.cos(angle) * offset, ty, tz + Math.sin(angle) * offset);
 
     s.mode = "traveling";
     s.isMoving = true;
     s.visitingAgentId = targetAgentId;
 
     setCurrentMode("traveling");
-    setActivityText("Going to sync up...");
+    setActivityText(reason);
     setActivityEmoji("🏃");
+    setVisitReason(reason);
 
     const dx = s.targetPos.x - s.currentPos.x;
     const dz = s.targetPos.z - s.currentPos.z;
@@ -427,17 +442,19 @@ function AgentCharacter({
 
     startRun();
     startVisit(agentId, targetAgentId);
-  }, [allAgentPositions, startRun, startVisit, agentId]);
+  }, [allAgentPositions, agentRole, startRun, startVisit, agentId]);
 
-  // Begin meeting
+  // ── Behavior: Begin meeting ──────────────────────────────────────
   const beginMeeting = useCallback(() => {
     const s = stateRef.current;
+    const meetingDuration = 5000 + Math.random() * 8000;
+
     s.mode = "meeting";
     s.isMoving = false;
-    s.activityEndTime = Date.now() + (MEETING_DURATION[0] + Math.random() * (MEETING_DURATION[1] - MEETING_DURATION[0])) * 1000;
+    s.activityEndTime = Date.now() + meetingDuration;
 
     setCurrentMode("meeting");
-    setActivityText("Syncing info...");
+    setActivityText(visitReason || "Syncing up");
     setActivityEmoji("💬");
 
     const targetInfo = allAgentPositions[s.visitingAgentId];
@@ -450,9 +467,9 @@ function AgentCharacter({
 
     startMeeting(agentId, s.visitingAgentId);
     playOneShot(WAVE_ANIMS, startIdle);
-  }, [allAgentPositions, startMeeting, agentId, playOneShot, startIdle]);
+  }, [allAgentPositions, visitReason, startMeeting, agentId, playOneShot, startIdle]);
 
-  // Return home
+  // ── Behavior: Return home ────────────────────────────────────────
   const returnHome = useCallback(() => {
     const s = stateRef.current;
     s.targetPos.copy(s.homePos);
@@ -461,8 +478,9 @@ function AgentCharacter({
     s.visitingAgentId = null;
 
     setCurrentMode("returning");
-    setActivityText("Heading back...");
+    setActivityText("Heading back");
     setActivityEmoji("🚶");
+    setVisitReason("");
 
     const dx = s.targetPos.x - s.currentPos.x;
     const dz = s.targetPos.z - s.currentPos.z;
@@ -472,54 +490,82 @@ function AgentCharacter({
     startWalk();
   }, [endVisit, agentId, startWalk]);
 
-  // Pick next activity based on game logic
+  // ── Behavior: Celebrate ──────────────────────────────────────────
+  const celebrate = useCallback(() => {
+    const messages = ["+1 Task Complete! 🎉", "Nailed it! ✨", "Done! 🚀", "Success! ✅"];
+    const message = messages[Math.floor(Math.random() * messages.length)];
+
+    stateRef.current.mode = "celebrating";
+    stateRef.current.activityEndTime = Date.now() + 2500;
+
+    setCurrentMode("celebrating");
+    setShowCelebration(true);
+    setCelebrationText(message);
+    setTasksCompleted((prev) => prev + 1);
+
+    playOneShot(CHEER_ANIMS, () => {
+      setShowCelebration(false);
+      startIdle();
+    });
+
+    setTimeout(() => setShowCelebration(false), 2500);
+  }, [playOneShot, startIdle]);
+
+  // ── Pick next activity ───────────────────────────────────────────
   const pickNextActivity = useCallback(() => {
     const activity = STATUS_ACTIVITY[status] || 0.3;
+    const s = stateRef.current;
+
     if (status === "offline") {
-      // Offline agents mostly idle
       startIdle();
       setActivityText("Offline");
       setActivityEmoji("💤");
+      s.mode = "idle";
+      setCurrentMode("idle");
+      s.activityEndTime = Date.now() + 10000;
       return;
     }
 
     const roll = Math.random();
 
-    if (roll < WORK_CHANCE * activity) {
-      // Work!
-      startWorking();
-    } else if (roll < (WORK_CHANCE + 0.15) * activity) {
-      // Think
-      startThinking();
-    } else if (roll < (WORK_CHANCE + 0.25) * activity) {
-      // Wander
+    if (roll < 0.55 * activity && zoneInteractions.length > 0) {
+      // Go interact with an object in zone
+      const interaction = zoneInteractions[Math.floor(Math.random() * zoneInteractions.length)];
+      goToInteraction(interaction);
+    } else if (roll < 0.75 * activity) {
+      // Wander around
       startWandering();
-    } else if (roll < (WORK_CHANCE + 0.30) * activity) {
-      // Take break
-      startBreak();
-    } else {
-      // Just idle briefly
+    } else if (roll < 0.85 * activity) {
+      // Brief thinking/idle
+      s.mode = "thinking";
+      s.activityEndTime = Date.now() + 3000 + Math.random() * 4000;
+      setCurrentMode("thinking");
+      setActivityText("Planning...");
+      setActivityEmoji("🤔");
       startIdle();
+      s.targetRotation += (Math.random() - 0.5) * Math.PI * 0.5;
+    } else {
+      // Just idle
+      s.mode = "idle";
+      s.activityEndTime = Date.now() + 2000 + Math.random() * 3000;
+      setCurrentMode("idle");
       setActivityText("");
       setActivityEmoji("");
-      stateRef.current.mode = "idle";
-      setCurrentMode("idle");
-      stateRef.current.activityEndTime = Date.now() + 2000 + Math.random() * 3000;
+      startIdle();
     }
-  }, [status, startWorking, startThinking, startWandering, startBreak, startIdle]);
+  }, [status, zoneInteractions, goToInteraction, startWandering, startIdle]);
 
   // ── Initialize ───────────────────────────────────────────────────
   useEffect(() => {
     if (!actions || Object.keys(actions).length === 0) return;
     pickNextActivity();
-  }, [actions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [actions]); // eslint-disable-line
 
   // ── Selection wave ───────────────────────────────────────────────
   useEffect(() => {
     if (!isSelected || !actions || Object.keys(actions).length === 0) return;
-    const s = stateRef.current;
-    s.mode = "idle";
-    s.isMoving = false;
+    stateRef.current.mode = "idle";
+    stateRef.current.isMoving = false;
     setActivityText("At your service!");
     setActivityEmoji("👋");
     playOneShot(WAVE_ANIMS, startIdle);
@@ -544,7 +590,6 @@ function AgentCharacter({
     const activity = STATUS_ACTIVITY[status] || 0.3;
     const now = Date.now();
 
-    // Skip AI when selected
     if (isSelected) {
       const rotDiff = s.targetRotation - s.currentRotation;
       const normDiff = Math.atan2(Math.sin(rotDiff), Math.cos(rotDiff));
@@ -558,17 +603,14 @@ function AgentCharacter({
       return;
     }
 
-    // ── Game State Machine ─────────────────────────────────────────
+    // ── State machine ──────────────────────────────────────────────
     switch (s.mode) {
       case "idle":
-      case "working":
       case "thinking":
-      case "break":
+      case "interacting":
       case "celebrating":
-        // Check if activity is done
         if (now > s.activityEndTime) {
-          // Chance to celebrate after work
-          if (s.mode === "working" && Math.random() < 0.3) {
+          if (s.mode === "interacting" && Math.random() < 0.25) {
             celebrate();
           } else {
             pickNextActivity();
@@ -578,14 +620,15 @@ function AgentCharacter({
         // Check for visit opportunity
         if (now > s.nextVisitTime && s.mode !== "celebrating") {
           const otherAgents = Object.keys(allAgentPositions).filter(id => id !== agentId);
-          if (otherAgents.length > 0 && Math.random() < activity * 0.4) {
+          if (otherAgents.length > 0 && Math.random() < activity * 0.5) {
             const targetId = otherAgents[Math.floor(Math.random() * otherAgents.length)];
             visitAgent(targetId);
           }
-          s.nextVisitTime = now + (VISIT_INTERVAL[0] + Math.random() * (VISIT_INTERVAL[1] - VISIT_INTERVAL[0])) * 1000 / activity;
+          s.nextVisitTime = now + (20000 + Math.random() * 35000) / activity;
         }
         break;
 
+      case "goingToInteraction":
       case "wandering":
       case "traveling":
       case "returning":
@@ -594,11 +637,13 @@ function AgentCharacter({
           const dz = s.targetPos.z - s.currentPos.z;
           const dist = Math.sqrt(dx * dx + dz * dz);
 
-          if (dist < 0.3) {
+          if (dist < 0.5) {
             s.currentPos.copy(s.targetPos);
             s.isMoving = false;
 
-            if (s.mode === "traveling") {
+            if (s.mode === "goingToInteraction") {
+              startInteracting();
+            } else if (s.mode === "traveling") {
               beginMeeting();
             } else {
               pickNextActivity();
@@ -619,39 +664,33 @@ function AgentCharacter({
           } else {
             returnHome();
           }
-        } else if (Math.random() < 0.008) {
-          // Occasional gestures
+        } else if (Math.random() < 0.005) {
           playOneShot(Math.random() < 0.5 ? WAVE_ANIMS : INTERACT_ANIMS, startIdle);
         }
         break;
     }
 
-    // ── Smooth rotation ────────────────────────────────────────────
+    // Smooth rotation
     const rotDiff = s.targetRotation - s.currentRotation;
     const normDiff = Math.atan2(Math.sin(rotDiff), Math.cos(rotDiff));
     s.currentRotation += normDiff * Math.min(1, delta * 5);
 
-    // ── Apply transforms ───────────────────────────────────────────
+    // Apply transforms
     if (characterRef.current) {
       characterRef.current.position.x = s.currentPos.x - position[0];
       characterRef.current.position.z = s.currentPos.z - position[2];
       characterRef.current.rotation.y = s.currentRotation;
     }
 
-    // ── Selection ring animation ───────────────────────────────────
+    // Selection ring animation
     if (selectionRingRef.current) {
       const t = state.clock.getElapsedTime();
       selectionRingRef.current.rotation.z = t * 0.5;
       const pulse = 1.0 + Math.sin(t * 2.5) * 0.08;
       selectionRingRef.current.scale.set(pulse, pulse, 1);
     }
-    if (selectionGlowRef.current) {
-      const t = state.clock.getElapsedTime();
-      selectionGlowRef.current.material.opacity = 0.15 + Math.sin(t * 3.0) * 0.1;
-    }
   });
 
-  // Status indicators
   const isTraveling = currentMode === "traveling" || currentMode === "returning";
   const isInMeeting = currentMode === "meeting";
   const isWorking = currentMode === "working";
@@ -665,17 +704,16 @@ function AgentCharacter({
       onPointerEnter={(e) => { e.stopPropagation(); setHovered(true); }}
       onPointerLeave={() => setHovered(false)}
     >
-      {/* Character container */}
       <group ref={characterRef}>
         <primitive object={clonedScene} scale={[2.5, 2.5, 2.5]} position={[0, 0, 0]} />
 
-        {/* Shadow disc */}
+        {/* Shadow */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>
           <circleGeometry args={[0.7, 32]} />
           <meshBasicMaterial color="#000000" transparent opacity={0.4} depthWrite={false} />
         </mesh>
 
-        {/* Game-style floating UI */}
+        {/* UI */}
         <Html
           position={[0, 8, 0]}
           center={true}
@@ -689,18 +727,14 @@ function AgentCharacter({
             textAlign: "center",
             whiteSpace: "nowrap",
           }}>
-            {/* Agent name */}
             <div style={{
               fontSize: "16px",
               fontWeight: 700,
               color: "#ffffff",
               textShadow: "0 0 6px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.7)",
-              lineHeight: 1.2,
             }}>
               {agentName}
             </div>
-
-            {/* Role badge */}
             <div style={{
               fontSize: "10px",
               fontWeight: 600,
@@ -713,10 +747,8 @@ function AgentCharacter({
               letterSpacing: "0.5px",
               textTransform: "uppercase",
             }}>
-              {agentRole}
+              {agentRoleLabel || agentRole}
             </div>
-
-            {/* Activity indicator - game style */}
             {activityText && (
               <div style={{
                 marginTop: "6px",
@@ -740,8 +772,6 @@ function AgentCharacter({
                 <span>{activityText}</span>
               </div>
             )}
-
-            {/* Celebration popup */}
             {showCelebration && (
               <div style={{
                 position: "absolute",
@@ -755,19 +785,15 @@ function AgentCharacter({
                 fontWeight: 700,
                 color: "#1a1a2e",
                 boxShadow: "0 4px 12px rgba(251, 191, 36, 0.5)",
-                animation: "celebration-pop 0.3s ease-out",
               }}>
                 {celebrationText}
               </div>
             )}
-
-            {/* Tasks completed counter */}
             {tasksCompleted > 0 && (
               <div style={{
                 marginTop: "4px",
                 fontSize: "9px",
                 color: "rgba(255,255,255,0.7)",
-                letterSpacing: "0.5px",
               }}>
                 ✨ {tasksCompleted} tasks today
               </div>
@@ -786,32 +812,16 @@ function AgentCharacter({
                 emissiveIntensity={2.0}
                 transparent
                 opacity={0.9}
-                roughness={0.2}
-                metalness={0.8}
               />
-            </mesh>
-            <mesh ref={selectionGlowRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
-              <ringGeometry args={[0.8, 1.4, 64]} />
-              <meshBasicMaterial color={agentColor} transparent opacity={0.2} side={THREE.DoubleSide} depthWrite={false} />
             </mesh>
             <pointLight position={[0, 0.5, 0]} color={agentColor} intensity={1.5} distance={4} decay={2} />
           </>
         )}
 
-        {/* Working glow */}
-        {isWorking && (
-          <pointLight position={[0, 2, 0]} color="#22c55e" intensity={1.5} distance={4} decay={2} />
-        )}
-
-        {/* Meeting glow */}
-        {isInMeeting && (
-          <pointLight position={[0, 2, 0]} color="#3b82f6" intensity={2} distance={5} decay={2} />
-        )}
-
-        {/* Thinking glow */}
-        {isThinking && (
-          <pointLight position={[0, 2, 0]} color="#a855f7" intensity={1.5} distance={4} decay={2} />
-        )}
+        {/* Activity glows */}
+        {isWorking && <pointLight position={[0, 2, 0]} color="#22c55e" intensity={1.5} distance={4} decay={2} />}
+        {isInMeeting && <pointLight position={[0, 2, 0]} color="#3b82f6" intensity={2} distance={5} decay={2} />}
+        {isThinking && <pointLight position={[0, 2, 0]} color="#a855f7" intensity={1.5} distance={4} decay={2} />}
       </group>
     </group>
   );

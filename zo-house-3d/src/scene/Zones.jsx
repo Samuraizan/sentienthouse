@@ -32,49 +32,49 @@ import ZonePlatform from "./ZonePlatform";
 export const ZONE_POSITIONS = {
   director: {
     position: [0, 0, 0],
-    size: [56, 56],  // Massive HQ zone for main director
+    size: [50, 50],  // Large HQ zone for main director
     color: "#FFD700",
     label: "HQ",
     role: "director",
   },
   "captain-blrxzo": {
-    position: [-75, 0, -15],
-    size: [48, 48],  // Huge captain zone
+    position: [-52, 0, -10],
+    size: [42, 42],  // Captain zone - Bangalore
     color: "#00BFFF",
     label: "BLRxZo",
     role: "captain-blrxzo",
   },
   "captain-wtfxzo": {
-    position: [75, 0, -15],
-    size: [48, 48],  // Huge captain zone
+    position: [52, 0, -10],
+    size: [42, 42],  // Captain zone - Goa
     color: "#FF6347",
     label: "WTFxZo",
     role: "captain-wtfxzo",
   },
   events: {
-    position: [-55, 0, 70],
-    size: [44, 44],  // Huge event zone
+    position: [-38, 0, 48],
+    size: [38, 38],  // Events zone
     color: "#FF69B4",
     label: "Events",
     role: "events",
   },
   sales: {
-    position: [55, 0, 70],
-    size: [44, 44],  // Huge sales zone
+    position: [38, 0, 48],
+    size: [38, 38],  // Sales zone
     color: "#2ECC71",
     label: "Sales",
     role: "sales",
   },
   bd: {
-    position: [-60, 0, -75],
-    size: [44, 44],  // Huge BD zone
+    position: [-42, 0, -52],
+    size: [38, 38],  // BD zone
     color: "#E67E22",
     label: "Business Dev",
     role: "bd",
   },
   "vibe-curator": {
-    position: [60, 0, -75],
-    size: [44, 44],  // Huge vibe zone
+    position: [42, 0, -52],
+    size: [38, 38],  // Vibe zone
     color: "#9B59B6",
     label: "Vibe",
     role: "vibe-curator",
