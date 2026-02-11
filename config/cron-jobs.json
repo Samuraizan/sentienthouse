@@ -1,0 +1,468 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "id": "2e03f461-a387-49be-b8dc-045123194106",
+      "agentId": "main",
+      "name": "ZomadPrime Morning Briefing",
+      "enabled": true,
+      "createdAtMs": 1770497704002,
+      "updatedAtMs": 1770805153049,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 10 * * *",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Morning briefing protocol: Pull occupancy from Supabase pms_bookings, event pipeline from events_db, blockers >3 days, and prepare briefing for Samurai. Format: Occupancy snapshot + Revenue health + Event pipeline + Active blockers + Top 3 priorities. Be concise, visual, action-oriented. Ready to present at 10:00 UTC."
+      },
+      "delivery": {
+        "mode": "announce"
+      },
+      "state": {
+        "nextRunAtMs": 1770890400000,
+        "lastRunAtMs": 1770804288893,
+        "lastStatus": "ok",
+        "lastDurationMs": 24654
+      }
+    },
+    {
+      "id": "a2521fd1-b622-4243-92ce-4934328dc680",
+      "agentId": "main",
+      "name": "Blocker Escalation Check (6-hourly)",
+      "enabled": false,
+      "createdAtMs": 1770497707988,
+      "updatedAtMs": 1770805367024,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 3 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Blocker check: Review BLOCKERS_ACTIVE.md and TASK_ASSIGNMENTS.md. Identify any tasks stuck >3 days. If found, format: [BLOCKER ALERT] Task# | Owner | Days stuck | Impact | Suggested unblock. Escalate to Samurai if critical (>7 days or revenue impact)."
+      },
+      "delivery": {
+        "mode": "announce"
+      },
+      "state": {}
+    },
+    {
+      "id": "83c89450-a36b-4e84-8241-8f7a0ac5a691",
+      "agentId": "main",
+      "name": "Suki Event Sync - Auto-capture Luma events & registrants",
+      "enabled": true,
+      "createdAtMs": 1770550105443,
+      "updatedAtMs": 1770818884094,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 86400000
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Poll Luma calendar (blrxzo) for new events created in the last 6 hours. For each new event: 1) Add to canonical_events with inferred culture_tag from name 2) Fetch all registrants from /v1/event/get-guests 3) Add to event_registrations. Report new events found + registrant count to Suki via dashboard."
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {
+        "nextRunAtMs": 1770905303481,
+        "lastRunAtMs": 1770818884094,
+        "lastStatus": "ok",
+        "lastDurationMs": 19387
+      }
+    },
+    {
+      "id": "70b93a66-f165-46e8-aa4e-acbf62f63135",
+      "agentId": "main",
+      "name": "Suki Typeform Sync - Event Inquiries",
+      "enabled": true,
+      "createdAtMs": 1770551350978,
+      "updatedAtMs": 1770820383843,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 86400000
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Sync Typeform event inquiries: 1) Fetch all responses from https://api.typeform.com/forms/LgcBfa0M/responses using token $TYPEFORM_TOKEN 2) Extract: first_name, last_name, email, phone, organization, event_type, event_date, budget, venue_preference 3) Store new responses (by token) to Supabase event_inquiries table 4) Report new inquiries count to Suki dashboard. Field refs: first_name=c020d8de, last_name=b931d769, email=5c9964fc, phone=828119d2, org=fa5f2c5a, venue=9447c2a9, budget=4df82482, type=524f54ed, date=f97d0ec6"
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {
+        "nextRunAtMs": 1770906803399,
+        "lastRunAtMs": 1770820383843,
+        "lastStatus": "ok",
+        "lastDurationMs": 19556
+      }
+    },
+    {
+      "id": "092921e9-3f70-40b4-b47f-97b9ca58645a",
+      "agentId": "main",
+      "name": "Weekly Scorecard — Monday 10 AM",
+      "enabled": true,
+      "createdAtMs": 1770557905140,
+      "updatedAtMs": 1770805155283,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 4 * * 1",
+        "tz": "UTC"
+      },
+      "sessionTarget": "main",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "systemEvent",
+        "text": "📊 WEEKLY SCORECARD — Feb 10, 10:00 AM IST\n\n🚨 CRITICAL BLOCKER: Boldrin (3.75/10)\n- P22: Form specs needed (Suki backend done)\n- P24: Pricing + email copy (Yana stalled)\n- P31/P30: Video editor status unknown\n\n✅ EXECUTION STARS:\n- Darshan: 8.75/10 (A-tier ops excellence)\n- LOKI: 8.5/10 (Community thriving)\n- Suki: 7.75/10 (Technical infrastructure ready)\n\n⚠️ WATCHES:\n- Wanda: 6.75/10 (Setup mode, not closing)\n- Yana: 4.25/10 (Waiting on specs)\n\n📋 Weekly targets + Feb 10-16 execution plan ready.\n\nFull scorecard: /WEEKLY_SCORECARD_FEB10.md"
+      },
+      "state": {
+        "nextRunAtMs": 1771216200000
+      }
+    },
+    {
+      "id": "0d78edbb-ec7a-41de-b249-2fe06fa69647",
+      "agentId": "main",
+      "name": "Task Kanban Sync to Zo Console",
+      "enabled": true,
+      "createdAtMs": 1770558013459,
+      "updatedAtMs": 1770811984097,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 86400000
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Task Kanban Sync: 1) Fetch Google Sheet 1csj8lmBRRHtcDdapRhiANn2xNYIDaPlRPZ1EQv_x0BI (laundry list) with Task | Priority | Owner | Status columns 2) Parse all 40+ rows; extract: Task ID, Description, Owner, Status (🟢 Done / 🟡 In Progress / 🛑 Not Started / ⏳ Blocked / ❌ Cancelled) 3) POST to https://ip-172-31-23-183.tail797355.ts.net/api/tasks with payload: [{id, title, owner, status, priority, updatedAt}] 4) Report sync result: X tasks synced, Y columns updated, last_sync_timestamp. If any errors, report to Samurai via announcement."
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {
+        "nextRunAtMs": 1770903403613,
+        "lastRunAtMs": 1770811984097,
+        "lastStatus": "ok",
+        "lastDurationMs": 19596
+      }
+    },
+    {
+      "id": "4d4d4815-7c83-49e3-954e-6b9862758ffc",
+      "agentId": "blrxzo-jr",
+      "name": "BLRxZo JR Task Audit — 10 AM IST",
+      "enabled": true,
+      "createdAtMs": 1770724979380,
+      "updatedAtMs": 1770805153041,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 4 * * *",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run morning-audit skill (task audit). Read the laundry list Google Sheet and send Darshan his task status. Show in progress, not started, postponed tasks sorted by priority. Send to BOTH Darshan (1081875702) AND Samurai (1275114944) via Telegram."
+      },
+      "delivery": {
+        "mode": "announce"
+      },
+      "state": {
+        "nextRunAtMs": 1770870600000
+      }
+    },
+    {
+      "id": "3158f2d8-3159-4b81-ba4e-cdc4e643f6e1",
+      "agentId": "blrxzo-jr",
+      "name": "BLRxZo JR Daily Recap — 8 AM IST",
+      "enabled": true,
+      "createdAtMs": 1770724979380,
+      "updatedAtMs": 1770805153037,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 2 * * *",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run daily-recap skill. Today is the morning update. Pull MTD financials from Supabase pms_bookings (property_id=BLRxZo) and Google Sheet BLRxZo PnL Summary 2026. Pull today events from Luma API using after parameter. Generate the daily recap and send to BOTH Darshan (1081875702) AND Samurai (1275114944) via Telegram."
+      },
+      "delivery": {
+        "mode": "announce"
+      },
+      "state": {
+        "nextRunAtMs": 1770863400000,
+        "lastRunAtMs": 1770801705639,
+        "lastStatus": "ok",
+        "lastDurationMs": 38446
+      }
+    },
+    {
+      "id": "e7dbdf8b-6f1f-47e2-a39f-e8202722133c",
+      "agentId": "wtfxzo-jr",
+      "name": "WTFxZo JR Task Audit — 10 AM IST",
+      "enabled": true,
+      "createdAtMs": 1770724979380,
+      "updatedAtMs": 1770805153043,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 4 * * *",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run morning-audit skill (task audit). Read the laundry list Google Sheet and send Akhilesh his task status. Filter for tasks owned by Akhilesh OR tagged WTFxZo. Show in progress, not started, postponed sorted by priority. Send to BOTH Akhilesh (558199761) AND Samurai (1275114944) via Telegram."
+      },
+      "delivery": {
+        "mode": "announce"
+      },
+      "state": {
+        "nextRunAtMs": 1770870600000
+      }
+    },
+    {
+      "id": "fce8c461-2b0a-4fe8-9ecb-90b6dea1d107",
+      "agentId": "wtfxzo-jr",
+      "name": "WTFxZo JR Daily Recap — 8 AM IST",
+      "enabled": true,
+      "createdAtMs": 1770724979380,
+      "updatedAtMs": 1770805153039,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 2 * * *",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run daily-recap skill. Today is the morning update. Pull MTD financials from Supabase pms_bookings (property_id=WTFxZo) and Google Sheet WTFxZo PnL Summary 2026. Pull today events from Luma API using after parameter. Generate the daily recap and send to BOTH Akhilesh (558199761) AND Samurai (1275114944) via Telegram."
+      },
+      "delivery": {
+        "mode": "announce"
+      },
+      "state": {
+        "nextRunAtMs": 1770863400000,
+        "lastRunAtMs": 1770790002025,
+        "lastStatus": "ok",
+        "lastDurationMs": 37530
+      }
+    },
+    {
+      "id": "5a94082f-4ee0-409f-9786-2a4de36408c7",
+      "agentId": "suki",
+      "name": "Suki Task Audit for Boldrin — 10 AM IST",
+      "enabled": true,
+      "createdAtMs": 1770729767452,
+      "updatedAtMs": 1770805153045,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 4 * * *",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run task audit. Read the laundry list Google Sheet (1csj8lmBRRHtcDdapRhiANn2xNYIDaPlRPZ1EQv_x0BI, tab main list) using the task-manager skill. Filter for tasks where Owner contains Boldrin. Show: in progress, not started, postponed — sorted by priority (P1 first). Format as a clean task audit with scoreboard and top 3 priorities. Send to BOTH Boldrin (Telegram ID: 817242399) AND Samurai (Telegram ID: 1275114944)."
+      },
+      "delivery": {
+        "mode": "announce"
+      },
+      "state": {
+        "nextRunAtMs": 1770870600000
+      }
+    },
+    {
+      "id": "d5506847-c1db-4251-b826-7c105415af4f",
+      "agentId": "main",
+      "name": "ZomadPrime Task Audit for Samurai — 10 AM IST",
+      "enabled": true,
+      "createdAtMs": 1770729767452,
+      "updatedAtMs": 1770805153046,
+      "schedule": {
+        "kind": "cron",
+        "expr": "30 4 * * *",
+        "tz": "UTC"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Run task audit. Read the laundry list Google Sheet (1csj8lmBRRHtcDdapRhiANn2xNYIDaPlRPZ1EQv_x0BI, tab main list) using the task-manager skill. Filter for tasks where Owner contains Samurai. Also show an OVERALL summary across ALL owners: total active, total done, total not started, plus anyone with more than 5 not-started tasks flagged. Send to Samurai (Telegram ID: 1275114944)."
+      },
+      "delivery": {
+        "mode": "announce"
+      },
+      "state": {
+        "nextRunAtMs": 1770870600000
+      }
+    },
+    {
+      "id": "3998897c-8229-493d-82de-1368203952c5",
+      "agentId": "main",
+      "name": "BLRxZo JR PMS Sync - Guest & Occupancy",
+      "enabled": false,
+      "createdAtMs": 1770795742464,
+      "updatedAtMs": 1770804881417,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 600000
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Sync BLRxZo PMS data: 1) Fetch all bookings from Supabase pms_bookings (property_id=BLRxZo) for today + next 7 days 2) Extract: guest_name, checkin, checkout, room_type, payment_status, notes 3) Calculate current occupancy % 4) Flag any payments pending or issues 5) Store to local cache for dashboard 6) Report to Darshan: Total guests today, occupancy %, payment status, upcoming checkouts. Format as quick standup."
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
+    },
+    {
+      "id": "d2c1b4b9-c505-45a9-b12d-04503af33b02",
+      "agentId": "main",
+      "name": "BLRxZo JR Maintenance Sync",
+      "enabled": false,
+      "createdAtMs": 1770795742472,
+      "updatedAtMs": 1770804891014,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 3600000
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Sync BLRxZo maintenance data: 1) Fetch all open maintenance issues from Supabase housekeeping_sessions (property_id=BLRxZo) 2) Extract: issue_type, location, date_reported, status, assigned_staff 3) Flag any >24hrs unresolved 4) Check scheduled cleaning zones for today 5) Report to Darshan: Open issues count, high-priority items, today's housekeeping schedule. If any >48hrs, escalate to Samurai."
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
+    },
+    {
+      "id": "9c4792bc-a46c-4c21-a197-4df362547f07",
+      "agentId": "main",
+      "name": "WTFxZo JR PMS Sync - Guest & Occupancy",
+      "enabled": false,
+      "createdAtMs": 1770795742479,
+      "updatedAtMs": 1770804883638,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 600000
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Sync WTFxZo PMS data: 1) Fetch all bookings from Supabase pms_bookings (property_id=WTFxZo) for today + next 7 days 2) Extract: guest_name, checkin, checkout, room_type, payment_status, notes 3) Calculate current occupancy % 4) Flag any payments pending or issues 5) Store to local cache for dashboard 6) Report to Akhilesh: Total guests today, occupancy %, payment status, upcoming checkouts. Format as quick standup."
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
+    },
+    {
+      "id": "a923a9e4-093e-4864-9773-525d1fdadf9f",
+      "agentId": "main",
+      "name": "WTFxZo JR Maintenance Sync",
+      "enabled": false,
+      "createdAtMs": 1770795742486,
+      "updatedAtMs": 1770804895029,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 3600000
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Sync WTFxZo maintenance data: 1) Fetch all open maintenance issues from Supabase housekeeping_sessions (property_id=WTFxZo) 2) Extract: issue_type, location, date_reported, status, assigned_staff 3) Flag any >24hrs unresolved 4) Check scheduled cleaning zones for today 5) Report to Akhilesh: Open issues count, high-priority items, today's housekeeping schedule. If any >48hrs, escalate to Samurai."
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
+    },
+    {
+      "id": "9c6d5fe4-c74f-4300-add6-033988509d5b",
+      "agentId": "main",
+      "name": "Yana BD Pipeline Sync - Partnerships",
+      "enabled": false,
+      "createdAtMs": 1770795751991,
+      "updatedAtMs": 1770804885912,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 1800000
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Sync Yana BD pipeline: 1) Fetch all partnerships/pipeline data from Pipedrive 2) Extract: prospect_name, stage, value, last_contact, next_action 3) Identify deals >3 days without update 4) Flag expired Follow-ups 5) Calculate pipeline value by stage 6) Report to Boldrin: Active prospects, total pipeline value, deals at risk, top 3 prospects to contact today."
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
+    },
+    {
+      "id": "7a6f84dd-7be9-4456-897c-3f14bddb5010",
+      "agentId": "main",
+      "name": "Wanda Sales Pipeline Sync - Leads",
+      "enabled": false,
+      "createdAtMs": 1770795751999,
+      "updatedAtMs": 1770804888247,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 1800000
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Sync Wanda sales pipeline: 1) Fetch all lead data from Pipedrive + CRM 2) Extract: lead_name, company, status, value, contacted_date, next_follow 3) Count: qualified, demo_scheduled, proposal_sent, closed 4) Flag leads overdue for follow-up 5) Calculate conversion rate 6) Report to Boldrin: Pipeline stage breakdown, deals in motion, leads at risk, top 3 to contact today."
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
+    },
+    {
+      "id": "261bac74-82f1-4183-8bb9-4f95581fc6ac",
+      "agentId": "main",
+      "name": "LOKI Community Activity Sync",
+      "enabled": false,
+      "createdAtMs": 1770795752005,
+      "updatedAtMs": 1770804899114,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 3600000
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "Sync LOKI community data: 1) Fetch all BLRxZo WhatsApp members + engagement from Supabase users table 2) Count daily active members, new joiners, inactive (>7 days) 3) Check vibe share submissions for today 4) Fetch upcoming community events from Luma (next 7 days) 5) Report to Pooja: Active members count, new joiners, engagement level, upcoming activities, any red flags (dormant subgroups). Flag member churn if >3% weekly loss."
+      },
+      "delivery": {
+        "mode": "none"
+      },
+      "state": {}
+    }
+  ]
+}
