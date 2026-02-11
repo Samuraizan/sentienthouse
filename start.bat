@@ -22,6 +22,13 @@ timeout /t 3 /nobreak > nul
 echo [3/3] Starting Tailscale Funnel...
 where tailscale >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
+    REM Start Tailscale service if not running
+    sc query Tailscale | find "RUNNING" >nul 2>nul
+    if %ERRORLEVEL% NEQ 0 (
+        echo   Starting Tailscale service...
+        net start Tailscale >nul 2>nul
+        timeout /t 3 /nobreak > nul
+    )
     start "Tailscale Funnel" cmd /k "tailscale funnel 3001"
     timeout /t 2 /nobreak > nul
     echo   Tailscale Funnel started on port 3001

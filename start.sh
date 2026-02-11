@@ -27,10 +27,22 @@ if ! command -v node &> /dev/null; then
     exit 1
 fi
 
-# Check Tailscale
+# Check and start Tailscale
 HAS_TAILSCALE=false
 if command -v tailscale &> /dev/null; then
     HAS_TAILSCALE=true
+    # Try to start Tailscale daemon if not running (Linux/Mac)
+    if ! tailscale status &> /dev/null; then
+        echo "Starting Tailscale service..."
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS - start via brew services or open app
+            brew services start tailscale 2>/dev/null || open -a Tailscale 2>/dev/null || true
+        else
+            # Linux - try systemctl
+            sudo systemctl start tailscaled 2>/dev/null || true
+        fi
+        sleep 3
+    fi
 fi
 
 echo "[1/4] Installing dependencies..."

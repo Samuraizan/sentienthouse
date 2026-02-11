@@ -20,8 +20,16 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-# Check Tailscale
+# Check and start Tailscale service
 $hasTailscale = Get-Command tailscale -ErrorAction SilentlyContinue
+if ($hasTailscale) {
+    $tailscaleService = Get-Service -Name "Tailscale" -ErrorAction SilentlyContinue
+    if ($tailscaleService -and $tailscaleService.Status -ne "Running") {
+        Write-Host "Starting Tailscale service..." -ForegroundColor Yellow
+        Start-Service -Name "Tailscale" -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 3
+    }
+}
 
 Write-Host "[1/4] Installing dependencies..." -ForegroundColor Yellow
 
