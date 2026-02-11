@@ -1,6 +1,6 @@
 import { Suspense, useRef, useEffect, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, useAnimations, OrbitControls, Environment } from "@react-three/drei";
+import { useGLTF, useAnimations, OrbitControls } from "@react-three/drei";
 import { clone as skeletonClone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import * as THREE from "three";
 
@@ -11,6 +11,7 @@ import * as THREE from "three";
  * and subtle rotation. Used as the centerpiece of the skill tree graph.
  */
 
+// Character model paths - same as main scene uses
 const CHARACTER_MODELS = {
   zomadprime: "/models/characters/zomadprime.glb",
   "blrxzo-jr": "/models/characters/blrxzo-jr.glb",
@@ -70,32 +71,58 @@ function CharacterModel({ modelPath, agentColor, autoRotate = true }) {
   });
 
   return (
-    <group ref={groupRef} position={[0, -1.8, 0]}>
-      <primitive object={clonedScene} scale={[2.0, 2.0, 2.0]} />
+    <group ref={groupRef} position={[0, -1.4, 0]}>
+      <primitive object={clonedScene} scale={[1.6, 1.6, 1.6]} />
     </group>
   );
 }
 
-function FallbackAvatar({ agentColor }) {
-  const meshRef = useRef();
+function FallbackAvatar({ agentColor, agentName = "" }) {
+  const groupRef = useRef();
   
   useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y = state.clock.getElapsedTime() * 0.5;
+    if (groupRef.current) {
+      groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.4;
     }
   });
 
+  // Create a stylized avatar shape (humanoid silhouette)
   return (
-    <mesh ref={meshRef}>
-      <capsuleGeometry args={[0.8, 1.5, 8, 16]} />
-      <meshStandardMaterial 
-        color={agentColor} 
-        emissive={agentColor}
-        emissiveIntensity={0.3}
-        metalness={0.2}
-        roughness={0.7}
-      />
-    </mesh>
+    <group ref={groupRef} position={[0, -0.3, 0]}>
+      {/* Head */}
+      <mesh position={[0, 1.0, 0]}>
+        <sphereGeometry args={[0.4, 16, 16]} />
+        <meshStandardMaterial 
+          color={agentColor} 
+          emissive={agentColor}
+          emissiveIntensity={0.5}
+          metalness={0.3}
+          roughness={0.6}
+        />
+      </mesh>
+      {/* Body */}
+      <mesh position={[0, 0.2, 0]}>
+        <capsuleGeometry args={[0.3, 0.9, 8, 16]} />
+        <meshStandardMaterial 
+          color={agentColor} 
+          emissive={agentColor}
+          emissiveIntensity={0.4}
+          metalness={0.2}
+          roughness={0.7}
+        />
+      </mesh>
+      {/* Glow ring at feet */}
+      <mesh position={[0, -0.3, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.8, 0.04, 8, 32]} />
+        <meshStandardMaterial 
+          color={agentColor} 
+          emissive={agentColor}
+          emissiveIntensity={1.2}
+          transparent
+          opacity={0.7}
+        />
+      </mesh>
+    </group>
   );
 }
 
@@ -105,9 +132,11 @@ export default function AgentAvatar3D({
   agentName = "",
   status = "offline",
   currentTask = null,
-  size = 200 
+  size = 120,  // Smaller default size
+  modelPath: providedModelPath = null,  // Allow passing model path directly
 }) {
-  const modelPath = CHARACTER_MODELS[agentId];
+  // Use provided path or look up from config
+  const modelPath = providedModelPath || CHARACTER_MODELS[agentId];
 
   return (
     <div
@@ -124,8 +153,8 @@ export default function AgentAvatar3D({
     >
       <Canvas
         camera={{
-          position: [0, 1.5, 7],
-          fov: 32,
+          position: [0, 1, 5.5],
+          fov: 35,
           near: 0.1,
           far: 100,
         }}
@@ -137,13 +166,13 @@ export default function AgentAvatar3D({
         style={{ background: "transparent" }}
       >
         {/* Lighting */}
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[5, 10, 5]} intensity={1.2} />
-        <directionalLight position={[-5, 5, -5]} intensity={0.5} color={agentColor} />
-        <pointLight position={[0, -2, 3]} intensity={0.8} color={agentColor} distance={10} />
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[5, 8, 5]} intensity={1} />
+        <directionalLight position={[-3, 4, -3]} intensity={0.4} color={agentColor} />
+        <pointLight position={[0, 0, 3]} intensity={0.6} color={agentColor} distance={8} />
         
         {/* Character */}
-        <Suspense fallback={<FallbackAvatar agentColor={agentColor} />}>
+        <Suspense fallback={<FallbackAvatar agentColor={agentColor} agentName={agentName} />}>
           {modelPath ? (
             <CharacterModel 
               modelPath={modelPath} 
@@ -151,7 +180,7 @@ export default function AgentAvatar3D({
               autoRotate={true}
             />
           ) : (
-            <FallbackAvatar agentColor={agentColor} />
+            <FallbackAvatar agentColor={agentColor} agentName={agentName} />
           )}
         </Suspense>
 
@@ -171,56 +200,56 @@ export default function AgentAvatar3D({
           position: "absolute",
           inset: 0,
           borderRadius: "50%",
-          border: `3px solid ${status === "active" || status === "online" ? "#44ffaa" : status === "idle" ? "#ffaa44" : "#666"}`,
+          border: `2px solid ${status === "active" || status === "online" ? "#44ffaa" : status === "idle" ? "#ffaa44" : "#555"}`,
           pointerEvents: "none",
           animation: status === "active" ? "pulse-glow 2s infinite" : "none",
         }}
       />
 
-      {/* Agent name badge */}
+      {/* Agent initial badge - shows first letter */}
       <div
         style={{
           position: "absolute",
-          bottom: "8px",
+          bottom: "4px",
           left: "50%",
           transform: "translateX(-50%)",
-          background: "rgba(0, 0, 0, 0.8)",
-          padding: "4px 12px",
-          borderRadius: "12px",
-          fontSize: "11px",
-          fontWeight: 600,
+          background: "rgba(0, 0, 0, 0.85)",
+          padding: "2px 8px",
+          borderRadius: "8px",
+          fontSize: size > 100 ? "10px" : "8px",
+          fontWeight: 700,
           color: agentColor,
           whiteSpace: "nowrap",
           fontFamily: "Inter, -apple-system, sans-serif",
           letterSpacing: "0.5px",
           textTransform: "uppercase",
+          maxWidth: "90%",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
         }}
       >
         {agentName}
       </div>
 
       {/* Current task indicator */}
-      {currentTask && (
+      {currentTask && size > 80 && (
         <div
           style={{
             position: "absolute",
-            top: "8px",
+            top: "4px",
             left: "50%",
             transform: "translateX(-50%)",
             background: "rgba(34, 197, 94, 0.9)",
-            padding: "3px 10px",
-            borderRadius: "10px",
-            fontSize: "9px",
+            padding: "2px 6px",
+            borderRadius: "6px",
+            fontSize: "8px",
             fontWeight: 600,
             color: "#fff",
             whiteSpace: "nowrap",
             fontFamily: "Inter, -apple-system, sans-serif",
-            maxWidth: "90%",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
           }}
         >
-          ⚡ Working
+          ⚡
         </div>
       )}
     </div>

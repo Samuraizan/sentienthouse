@@ -280,9 +280,9 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
 
   const centerX = dimensions.width / 2;
   const centerY = dimensions.height / 2;
-  // Larger radius to accommodate 3D avatar
-  const avatarSize = Math.min(dimensions.width, dimensions.height) * 0.32;
-  const radius = Math.min(dimensions.width, dimensions.height) * 0.42;
+  // Smaller avatar size for cleaner look
+  const avatarSize = Math.min(dimensions.width, dimensions.height) * 0.22;
+  const radius = Math.min(dimensions.width, dimensions.height) * 0.4;
 
   const nodePositions = useMemo(() => {
     return computeRadialLayout(skills.length, centerX, centerY, radius);
@@ -392,47 +392,47 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
           </line>
         ))}
 
-        {/* ── Pulsing ring around 3D avatar ── */}
+        {/* ── Pulsing ring around avatar ── */}
         <circle
           cx={centerX}
           cy={centerY}
-          r={avatarSize / 2 + 8}
+          r={avatarSize / 2 + 6}
           fill="none"
           stroke={color}
           strokeWidth="2"
-          strokeOpacity="0.4"
+          strokeOpacity="0.5"
         >
           <animate
             attributeName="r"
-            values={`${avatarSize / 2 + 8};${avatarSize / 2 + 16};${avatarSize / 2 + 8}`}
+            values={`${avatarSize / 2 + 6};${avatarSize / 2 + 12};${avatarSize / 2 + 6}`}
             dur="3s"
             repeatCount="indefinite"
           />
           <animate
             attributeName="stroke-opacity"
-            values="0.4;0.15;0.4"
+            values="0.5;0.2;0.5"
             dur="3s"
             repeatCount="indefinite"
           />
         </circle>
 
-        {/* ── Second outer ring ── */}
+        {/* ── Rotating outer ring ── */}
         <circle
           cx={centerX}
           cy={centerY}
-          r={avatarSize / 2 + 20}
+          r={avatarSize / 2 + 16}
           fill="none"
           stroke={color}
           strokeWidth="1"
-          strokeOpacity="0.2"
-          strokeDasharray="8 4"
+          strokeOpacity="0.25"
+          strokeDasharray="6 3"
         >
           <animateTransform
             attributeName="transform"
             type="rotate"
             from={`0 ${centerX} ${centerY}`}
             to={`360 ${centerX} ${centerY}`}
-            dur="20s"
+            dur="15s"
             repeatCount="indefinite"
           />
         </circle>
@@ -455,9 +455,9 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
         {/* ── Skill count badge ── */}
         <text
           x={centerX}
-          y={centerY - avatarSize / 2 - 20}
+          y={centerY - avatarSize / 2 - 24}
           textAnchor="middle"
-          fill="#888"
+          fill="#999"
           fontSize="10"
           fontFamily="Inter, -apple-system, sans-serif"
           fontWeight="600"

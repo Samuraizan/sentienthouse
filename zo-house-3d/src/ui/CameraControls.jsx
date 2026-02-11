@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import useAgentStore from "../store/agentStore";
 
 const OVERVIEW = {
@@ -25,6 +25,11 @@ const RESET_BUTTON = {
       <polyline points="9 22 9 12 15 12 15 22" />
     </svg>
   ),
+};
+
+// Detect if device is touch-enabled
+const isTouchDevice = () => {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 };
 
 export default function CameraControls() {
@@ -66,36 +71,69 @@ export default function CameraControls() {
 
   const activeId = skillTreeAgentId ? null : cameraPreset;
 
+  // Mobile navigation hint
+  const [showMobileHint, setShowMobileHint] = useState(true);
+  const [isTouch] = useState(isTouchDevice);
+
+  useEffect(() => {
+    if (isTouch) {
+      const timer = setTimeout(() => {
+        setShowMobileHint(false);
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [isTouch]);
+
   return (
-    <div className="camera-controls">
-      <div className="camera-controls__group">
-        <button
-          className={
-            "camera-controls__btn" +
-            (activeId === "overview" ? " camera-controls__btn--active" : "")
-          }
-          onClick={() => handlePreset("overview")}
-          title="Overview (1)"
-        >
-          <span className="camera-controls__btn-icon">{OVERVIEW.icon}</span>
-          <span className="camera-controls__btn-label">Overview</span>
-        </button>
+    <>
+      <div className="camera-controls">
+        <div className="camera-controls__group">
+          <button
+            className={
+              "camera-controls__btn" +
+              (activeId === "overview" ? " camera-controls__btn--active" : "")
+            }
+            onClick={() => handlePreset("overview")}
+            title="Overview (1)"
+          >
+            <span className="camera-controls__btn-icon">{OVERVIEW.icon}</span>
+            <span className="camera-controls__btn-label">Overview</span>
+          </button>
 
-        <div className="camera-controls__divider" />
+          <div className="camera-controls__divider" />
 
-        <button
-          className="camera-controls__btn camera-controls__btn--reset"
-          onClick={() => handlePreset("reset")}
-          title="Reset (Esc)"
-        >
-          <span className="camera-controls__btn-icon">{RESET_BUTTON.icon}</span>
-          <span className="camera-controls__btn-label">Reset</span>
-        </button>
+          <button
+            className="camera-controls__btn camera-controls__btn--reset"
+            onClick={() => handlePreset("reset")}
+            title="Reset (Esc)"
+          >
+            <span className="camera-controls__btn-icon">{RESET_BUTTON.icon}</span>
+            <span className="camera-controls__btn-label">Reset</span>
+          </button>
+        </div>
+
+        <div className="camera-controls__shortcuts">
+          <span>1</span> home &nbsp;&bull;&nbsp; <span>Esc</span> reset
+        </div>
       </div>
 
-      <div className="camera-controls__shortcuts">
-        <span>1</span> home &nbsp;&bull;&nbsp; <span>Esc</span> reset
-      </div>
-    </div>
+      {/* Mobile navigation hint */}
+      {isTouch && showMobileHint && (
+        <div className={`mobile-nav-hint ${!showMobileHint ? 'mobile-nav-hint--hide' : ''}`}>
+          <div className="mobile-nav-hint__item">
+            <span className="mobile-nav-hint__icon">👆</span>
+            <span>Drag to rotate</span>
+          </div>
+          <div className="mobile-nav-hint__item">
+            <span className="mobile-nav-hint__icon">🤏</span>
+            <span>Pinch to zoom</span>
+          </div>
+          <div className="mobile-nav-hint__item">
+            <span className="mobile-nav-hint__icon">✌️</span>
+            <span>Two fingers to pan</span>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
