@@ -6,6 +6,8 @@ node_modules/
 .env.local
 .env.production
 .credentials/
+client_secret*.json
+token.json
 
 # Runtime data
 data/

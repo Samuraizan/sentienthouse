@@ -3,82 +3,47 @@ import useAgentStore from "../store/agentStore.js";
 import AgentAvatar3D from "./AgentAvatar3D.jsx";
 
 /**
- * SkillsGraph.jsx — Network/mind-map visualization of an agent's skills (#22)
+ * SkillsGraph.jsx — Interactive skill visualization for agents
  *
- * SVG-based radial graph with the agent avatar in the center and skills as
- * connected nodes arranged in a circle around it. Inspired by Ralv.ai's skills
- * view. Designed to sit inside the AgentPanel as a tab/overlay.
- *
- * Features:
- *   - Agent avatar (colored circle with initial) at center
- *   - Skills as rounded-rect nodes in a radial layout
- *   - Animated connecting lines from center to each skill
- *   - Hover effects with subtle floating animation
- *   - Click-to-expand skill detail tooltip
- *   - Falls back to static skill data when API is unavailable
+ * Fetches actual skills from the workspace folders via API and displays them
+ * in a radial graph with the agent avatar at center. Click skills to see
+ * full details including description, triggers, and content preview.
  */
 
-// ── Static fallback skill data with descriptions ───────────────────
-const SKILL_CATALOG = {
-  // events/suki
-  "invoice-maker":    { description: "Generate PDF invoices for events and bookings", category: "finance" },
-  "event-inquiry":    { description: "Handle inbound event inquiries and qualify leads", category: "events" },
-  "luma-sync":        { description: "Sync event data with Luma calendar platform", category: "integration" },
-  "event-marketing":  { description: "Create marketing materials and social posts for events", category: "marketing" },
-  "event-recap":      { description: "Generate post-event summaries and metrics reports", category: "reporting" },
-  "rev-tracking":     { description: "Track revenue across events and generate financial reports", category: "finance" },
-  // captain-blrxzo / captain-wtfxzo
-  "morning-audit":    { description: "Daily checklist audit for property operations kickoff", category: "operations" },
-  "guest-flow":       { description: "Manage check-in/check-out flow and guest experience", category: "hospitality" },
-  "financial-entry":  { description: "Record daily financial transactions and expenses", category: "finance" },
-  "staff-report":     { description: "Compile staff attendance, tasks, and performance notes", category: "hr" },
-  "maintenance-triage": { description: "Prioritize and route maintenance requests", category: "operations" },
-  "daily-recap":      { description: "End-of-day property summary with KPIs and highlights", category: "reporting" },
-  // vibe-curator/loki
-  "guest-welcome":    { description: "Personalized welcome messages for new guests", category: "hospitality" },
-  "daily-vibe":       { description: "Curate daily playlist, lighting mood, and atmosphere", category: "creative" },
-  "city-event":       { description: "Scout and share relevant city events and happenings", category: "community" },
-  "community-pulse":  { description: "Monitor community sentiment and engagement metrics", category: "community" },
-  // sales/wanda
-  "lead-qualify":     { description: "Score and qualify inbound sales leads", category: "sales" },
-  "outreach-sequence": { description: "Manage automated outreach email sequences", category: "sales" },
-  "pipeline-update":  { description: "Update sales pipeline status and forecast", category: "sales" },
-  "founder-marketing": { description: "Create founder-focused marketing content and outreach", category: "marketing" },
-  // bd/yana
-  "partner-research": { description: "Research potential brand and business partners", category: "research" },
-  "founder-outreach": { description: "Outreach campaigns targeting founders and entrepreneurs", category: "bd" },
-  "deal-pipeline":    { description: "Track and manage business development deals", category: "bd" },
-  // director/zomadprime
-  "delegate-task":    { description: "Delegate tasks to agents with context and priority", category: "management" },
-  "morning-briefing": { description: "Compile cross-agent morning briefing for leadership", category: "reporting" },
-  "weekly-scorecard": { description: "Generate weekly team performance scorecards", category: "reporting" },
-};
-
-const FALLBACK_SKILLS = {
-  zomadprime:    ["delegate-task", "morning-briefing", "weekly-scorecard"],
-  "blrxzo-jr":   ["morning-audit", "guest-flow", "financial-entry", "staff-report", "maintenance-triage", "daily-recap"],
-  "wtfxzo-jr":   ["morning-audit", "guest-flow", "financial-entry", "staff-report", "maintenance-triage", "daily-recap"],
-  suki:          ["invoice-maker", "event-inquiry", "luma-sync", "event-marketing", "event-recap", "rev-tracking"],
-  loki:          ["guest-welcome", "daily-vibe", "city-event", "community-pulse"],
-  wanda:         ["lead-qualify", "outreach-sequence", "pipeline-update", "founder-marketing"],
-  yana:          ["partner-research", "founder-outreach", "deal-pipeline"],
-};
+const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 const CATEGORY_COLORS = {
-  finance:      "#FFD700",
-  events:       "#FF69B4",
-  integration:  "#00CED1",
-  marketing:    "#FF6347",
-  reporting:    "#8A2BE2",
-  operations:   "#4CAF50",
-  hospitality:  "#FF8C00",
-  hr:           "#1E90FF",
-  creative:     "#E040FB",
-  community:    "#00E676",
-  sales:        "#FFAB00",
-  research:     "#7C4DFF",
-  bd:           "#FF5722",
-  management:   "#00BCD4",
+  finance: "#FFD700",
+  events: "#FF69B4",
+  integration: "#00CED1",
+  marketing: "#FF6347",
+  reporting: "#8A2BE2",
+  operations: "#4CAF50",
+  hospitality: "#FF8C00",
+  hr: "#1E90FF",
+  creative: "#E040FB",
+  community: "#00E676",
+  sales: "#FFAB00",
+  research: "#7C4DFF",
+  bd: "#FF5722",
+  management: "#00BCD4",
+};
+
+const CATEGORY_ICONS = {
+  finance: "💰",
+  events: "🎉",
+  integration: "🔗",
+  marketing: "📣",
+  reporting: "📊",
+  operations: "⚙️",
+  hospitality: "🏠",
+  hr: "👥",
+  creative: "🎨",
+  community: "🌐",
+  sales: "💼",
+  research: "🔬",
+  bd: "🤝",
+  management: "👑",
 };
 
 /**
@@ -87,7 +52,6 @@ const CATEGORY_COLORS = {
 function computeRadialLayout(skillCount, centerX, centerY, radius) {
   const positions = [];
   const angleStep = (2 * Math.PI) / skillCount;
-  // Start from the top (-PI/2) and go clockwise
   const startAngle = -Math.PI / 2;
 
   for (let i = 0; i < skillCount; i++) {
@@ -104,20 +68,10 @@ function computeRadialLayout(skillCount, centerX, centerY, radius) {
 /**
  * A single skill node component rendered in SVG.
  */
-function SkillNode({
-  skill,
-  x,
-  y,
-  index,
-  agentColor,
-  isExpanded,
-  onToggle,
-  onTrigger,
-}) {
-  const info = SKILL_CATALOG[skill] || { description: "Custom skill", category: "operations" };
-  const categoryColor = CATEGORY_COLORS[info.category] || agentColor;
-  const nodeWidth = 140;
-  const nodeHeight = isExpanded ? 80 : 44;
+function SkillNode({ skill, x, y, index, agentColor, isSelected, onSelect }) {
+  const categoryColor = CATEGORY_COLORS[skill.category] || agentColor;
+  const nodeWidth = 130;
+  const nodeHeight = 42;
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -128,7 +82,7 @@ function SkillNode({
       onMouseLeave={() => setHovered(false)}
       onClick={(e) => {
         e.stopPropagation();
-        onToggle(skill);
+        onSelect(skill);
       }}
     >
       {/* Animate entrance */}
@@ -137,8 +91,8 @@ function SkillNode({
         type="translate"
         from={`${x - nodeWidth / 2}, ${y - nodeHeight / 2 + 20}`}
         to={`${x - nodeWidth / 2}, ${y - nodeHeight / 2}`}
-        dur="0.5s"
-        begin={`${index * 0.08}s`}
+        dur="0.4s"
+        begin={`${index * 0.06}s`}
         fill="freeze"
         calcMode="spline"
         keySplines="0.25 0.46 0.45 0.94"
@@ -148,117 +102,301 @@ function SkillNode({
       <rect
         width={nodeWidth}
         height={nodeHeight}
-        rx={12}
-        ry={12}
-        fill={hovered ? "rgba(30, 34, 50, 0.95)" : "rgba(20, 24, 40, 0.85)"}
-        stroke={agentColor}
-        strokeWidth={hovered ? 2 : 1}
-        strokeOpacity={hovered ? 0.9 : 0.4}
+        rx={10}
+        ry={10}
+        fill={isSelected ? "rgba(40, 44, 60, 0.98)" : hovered ? "rgba(30, 34, 50, 0.95)" : "rgba(20, 24, 40, 0.85)"}
+        stroke={isSelected ? categoryColor : agentColor}
+        strokeWidth={isSelected ? 2.5 : hovered ? 2 : 1}
+        strokeOpacity={isSelected ? 1 : hovered ? 0.9 : 0.4}
         style={{
-          filter: hovered ? `drop-shadow(0 0 8px ${agentColor}60)` : "none",
-          transition: "all 0.3s ease",
+          filter: isSelected || hovered ? `drop-shadow(0 0 10px ${categoryColor}50)` : "none",
+          transition: "all 0.2s ease",
         }}
       />
 
-      {/* Category indicator dot */}
-      <circle
-        cx={16}
-        cy={22}
-        r={4}
+      {/* Category indicator */}
+      <rect
+        x={0}
+        y={0}
+        width={6}
+        height={nodeHeight}
+        rx={3}
         fill={categoryColor}
         opacity={0.9}
       />
 
       {/* Skill name */}
       <text
-        x={28}
-        y={26}
-        fill="#E0E0E0"
+        x={14}
+        y={18}
+        fill="#E8E8E8"
         fontSize="11"
         fontFamily="Inter, SF Pro Display, -apple-system, sans-serif"
         fontWeight="600"
       >
-        {skill.length > 16 ? skill.slice(0, 15) + "\u2026" : skill}
+        {skill.name.length > 14 ? skill.name.slice(0, 13) + "…" : skill.name}
       </text>
 
-      {/* Expanded: description + trigger button */}
-      {isExpanded && (
-        <>
-          <text
-            x={12}
-            y={48}
-            fill="#999"
-            fontSize="9"
-            fontFamily="Inter, -apple-system, sans-serif"
-            fontWeight="400"
-          >
-            {info.description.length > 28
-              ? info.description.slice(0, 27) + "\u2026"
-              : info.description}
-          </text>
+      {/* Category label */}
+      <text
+        x={14}
+        y={32}
+        fill={categoryColor}
+        fontSize="9"
+        fontFamily="Inter, -apple-system, sans-serif"
+        fontWeight="500"
+        opacity={0.8}
+      >
+        {CATEGORY_ICONS[skill.category] || "📋"} {skill.category}
+      </text>
 
-          {/* Trigger button */}
-          <g
-            onClick={(e) => {
-              e.stopPropagation();
-              onTrigger(skill);
-            }}
-            style={{ cursor: "pointer" }}
-          >
-            <rect
-              x={nodeWidth - 56}
-              y={56}
-              width={44}
-              height={18}
-              rx={9}
-              fill={agentColor}
-              opacity={0.25}
-            />
-            <text
-              x={nodeWidth - 34}
-              y={68}
-              fill={agentColor}
-              fontSize="9"
-              fontWeight="600"
-              textAnchor="middle"
-              fontFamily="Inter, -apple-system, sans-serif"
-            >
-              Run
-            </text>
-          </g>
-        </>
-      )}
-
-      {/* Subtle floating animation on hover */}
-      {hovered && (
-        <animateTransform
-          attributeName="transform"
-          type="translate"
-          values={`${x - nodeWidth / 2}, ${y - nodeHeight / 2}; ${x - nodeWidth / 2}, ${y - nodeHeight / 2 - 3}; ${x - nodeWidth / 2}, ${y - nodeHeight / 2}`}
-          dur="2s"
-          repeatCount="indefinite"
-        />
+      {/* Selection indicator */}
+      {isSelected && (
+        <circle
+          cx={nodeWidth - 12}
+          cy={nodeHeight / 2}
+          r={5}
+          fill={categoryColor}
+        >
+          <animate
+            attributeName="r"
+            values="4;6;4"
+            dur="1.5s"
+            repeatCount="indefinite"
+          />
+        </circle>
       )}
     </g>
   );
 }
 
+/**
+ * Skill detail panel showing full information
+ */
+function SkillDetailPanel({ skill, agentColor, onClose, onRun }) {
+  if (!skill) return null;
+
+  const categoryColor = CATEGORY_COLORS[skill.category] || agentColor;
+
+  return (
+    <div
+      className="skill-detail-panel"
+      style={{
+        position: "absolute",
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: "320px",
+        background: "linear-gradient(180deg, rgba(20, 22, 35, 0.98) 0%, rgba(15, 17, 28, 0.98) 100%)",
+        borderLeft: `2px solid ${categoryColor}40`,
+        padding: "20px",
+        overflowY: "auto",
+        zIndex: 20,
+        boxShadow: "-4px 0 20px rgba(0,0,0,0.4)",
+      }}
+    >
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        style={{
+          position: "absolute",
+          top: "12px",
+          right: "12px",
+          background: "rgba(255,255,255,0.1)",
+          border: "none",
+          borderRadius: "50%",
+          width: "28px",
+          height: "28px",
+          cursor: "pointer",
+          color: "#888",
+          fontSize: "16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        ✕
+      </button>
+
+      {/* Header */}
+      <div style={{ marginBottom: "20px" }}>
+        <div
+          style={{
+            display: "inline-block",
+            padding: "4px 10px",
+            background: `${categoryColor}25`,
+            borderRadius: "6px",
+            fontSize: "10px",
+            fontWeight: 600,
+            color: categoryColor,
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+            marginBottom: "10px",
+          }}
+        >
+          {CATEGORY_ICONS[skill.category]} {skill.category}
+        </div>
+        <h3
+          style={{
+            color: "#f0f0f0",
+            fontSize: "18px",
+            fontWeight: 700,
+            margin: "0 0 8px 0",
+            fontFamily: "Inter, -apple-system, sans-serif",
+          }}
+        >
+          {skill.name}
+        </h3>
+        <p
+          style={{
+            color: "#aaa",
+            fontSize: "13px",
+            lineHeight: 1.5,
+            margin: 0,
+            fontFamily: "Inter, -apple-system, sans-serif",
+          }}
+        >
+          {skill.description}
+        </p>
+      </div>
+
+      {/* Triggers */}
+      {skill.triggers && skill.triggers.length > 0 && (
+        <div style={{ marginBottom: "20px" }}>
+          <h4
+            style={{
+              color: "#888",
+              fontSize: "10px",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "1px",
+              marginBottom: "10px",
+            }}
+          >
+            Triggers
+          </h4>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+            {skill.triggers.slice(0, 6).map((trigger, i) => (
+              <span
+                key={i}
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  padding: "4px 10px",
+                  borderRadius: "12px",
+                  fontSize: "11px",
+                  color: "#ccc",
+                  fontFamily: "Inter, -apple-system, sans-serif",
+                }}
+              >
+                "{trigger}"
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Content preview */}
+      {skill.content && (
+        <div style={{ marginBottom: "20px" }}>
+          <h4
+            style={{
+              color: "#888",
+              fontSize: "10px",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "1px",
+              marginBottom: "10px",
+            }}
+          >
+            Instructions Preview
+          </h4>
+          <div
+            style={{
+              background: "rgba(0,0,0,0.3)",
+              borderRadius: "8px",
+              padding: "12px",
+              maxHeight: "200px",
+              overflowY: "auto",
+            }}
+          >
+            <pre
+              style={{
+                color: "#999",
+                fontSize: "11px",
+                lineHeight: 1.5,
+                margin: 0,
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                fontFamily: "SF Mono, Menlo, monospace",
+              }}
+            >
+              {skill.content.slice(0, 800)}
+              {skill.content.length > 800 && "..."}
+            </pre>
+          </div>
+        </div>
+      )}
+
+      {/* Run button */}
+      <button
+        onClick={() => onRun(skill.name)}
+        style={{
+          width: "100%",
+          padding: "12px",
+          background: `linear-gradient(135deg, ${categoryColor}90 0%, ${categoryColor}60 100%)`,
+          border: "none",
+          borderRadius: "10px",
+          color: "#fff",
+          fontSize: "13px",
+          fontWeight: 600,
+          cursor: "pointer",
+          fontFamily: "Inter, -apple-system, sans-serif",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
+        }}
+      >
+        ⚡ Run Skill
+      </button>
+    </div>
+  );
+}
 
 /**
  * Main SkillsGraph component.
- * Renders an SVG radial mind-map of the selected agent's skills.
  */
 export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill }) {
   const agent = useAgentStore((s) => s.agents.find((a) => a.id === agentId));
-  const [expandedSkill, setExpandedSkill] = useState(null);
+  const [skills, setSkills] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedSkill, setSelectedSkill] = useState(null);
   const [dimensions, setDimensions] = useState({ width: 480, height: 420 });
   const containerRef = useRef(null);
 
-  // Get skills from store, fall back to static data
-  const skills = useMemo(() => {
-    if (agent?.skills && agent.skills.length > 0) return agent.skills;
-    return FALLBACK_SKILLS[agentId] || [];
-  }, [agent, agentId]);
+  // Fetch skills from API
+  useEffect(() => {
+    async function fetchSkills() {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/skills/${agentId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.skills && data.skills.length > 0) {
+            setSkills(data.skills);
+          }
+        }
+      } catch (e) {
+        console.error("[SkillsGraph] Failed to fetch skills:", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    if (agentId) {
+      fetchSkills();
+    }
+  }, [agentId]);
 
   // Responsive sizing
   useEffect(() => {
@@ -278,27 +416,65 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
   const color = agentColor || agent?.color || "#8888ff";
   const name = agentName || agent?.name || agentId;
 
-  const centerX = dimensions.width / 2;
+  // Adjust layout based on whether detail panel is open
+  const graphWidth = selectedSkill ? dimensions.width - 320 : dimensions.width;
+  const centerX = graphWidth / 2;
   const centerY = dimensions.height / 2;
-  // Smaller avatar size for cleaner look
-  const avatarSize = Math.min(dimensions.width, dimensions.height) * 0.22;
-  const radius = Math.min(dimensions.width, dimensions.height) * 0.4;
+  const avatarSize = Math.min(graphWidth, dimensions.height) * 0.22;
+  const radius = Math.min(graphWidth, dimensions.height) * 0.38;
 
   const nodePositions = useMemo(() => {
     return computeRadialLayout(skills.length, centerX, centerY, radius);
   }, [skills.length, centerX, centerY, radius]);
 
-  const handleToggleSkill = useCallback((skill) => {
-    setExpandedSkill((prev) => (prev === skill ? null : skill));
+  const handleSelectSkill = useCallback((skill) => {
+    setSelectedSkill((prev) => (prev?.id === skill.id ? null : skill));
   }, []);
 
-  const handleTriggerSkill = useCallback((skill) => {
-    if (onRunSkill) {
-      onRunSkill(skill);
-    } else {
-      console.log(`[SkillsGraph] Trigger skill: ${skill} for agent: ${agentId}`);
-    }
-  }, [agentId, onRunSkill]);
+  const handleTriggerSkill = useCallback(
+    (skillName) => {
+      if (onRunSkill) {
+        onRunSkill(skillName);
+      } else {
+        console.log(`[SkillsGraph] Trigger skill: ${skillName} for agent: ${agentId}`);
+      }
+    },
+    [agentId, onRunSkill]
+  );
+
+  if (loading) {
+    return (
+      <div
+        ref={containerRef}
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#666",
+          fontFamily: "Inter, -apple-system, sans-serif",
+          fontSize: "13px",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              width: "32px",
+              height: "32px",
+              border: `3px solid ${color}30`,
+              borderTopColor: color,
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              margin: "0 auto 12px",
+            }}
+          />
+          Loading skills...
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   if (skills.length === 0) {
     return (
@@ -315,7 +491,7 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
           fontSize: "13px",
         }}
       >
-        No skills configured for this agent.
+        No skills found for this agent.
       </div>
     );
   }
@@ -333,40 +509,21 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
       }}
     >
       <svg
-        width={dimensions.width}
+        width={graphWidth}
         height={dimensions.height}
-        viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
+        viewBox={`0 0 ${graphWidth} ${dimensions.height}`}
         xmlns="http://www.w3.org/2000/svg"
         style={{ display: "block" }}
       >
-        {/* Background grid pattern (subtle) */}
+        {/* Background grid pattern */}
         <defs>
-          <pattern
-            id="skills-grid"
-            width="30"
-            height="30"
-            patternUnits="userSpaceOnUse"
-          >
+          <pattern id="skills-grid" width="30" height="30" patternUnits="userSpaceOnUse">
             <circle cx="15" cy="15" r="0.5" fill="#ffffff08" />
           </pattern>
-          {/* Glow filter for center avatar */}
-          <filter id="center-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="6" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          {/* Line gradient */}
-          <linearGradient id={`line-grad-${agentId}`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={color} stopOpacity="0.6" />
-            <stop offset="100%" stopColor={color} stopOpacity="0.15" />
-          </linearGradient>
         </defs>
-
         <rect width="100%" height="100%" fill="url(#skills-grid)" />
 
-        {/* ── Connection lines from center to each skill node ── */}
+        {/* Connection lines */}
         {nodePositions.map((pos, i) => (
           <line
             key={`line-${i}`}
@@ -374,25 +531,24 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
             y1={centerY}
             x2={pos.x}
             y2={pos.y}
-            stroke={color}
-            strokeWidth={expandedSkill === skills[i] ? 2 : 1}
-            strokeOpacity={expandedSkill === skills[i] ? 0.7 : 0.25}
-            strokeDasharray={expandedSkill === skills[i] ? "none" : "4 4"}
-            style={{ transition: "all 0.3s ease" }}
+            stroke={selectedSkill?.id === skills[i].id ? CATEGORY_COLORS[skills[i].category] || color : color}
+            strokeWidth={selectedSkill?.id === skills[i].id ? 2 : 1}
+            strokeOpacity={selectedSkill?.id === skills[i].id ? 0.8 : 0.2}
+            strokeDasharray={selectedSkill?.id === skills[i].id ? "none" : "4 4"}
+            style={{ transition: "all 0.2s ease" }}
           >
-            {/* Animated line drawing on mount */}
             <animate
               attributeName="stroke-dashoffset"
               from="200"
               to="0"
-              dur="1s"
-              begin={`${i * 0.1}s`}
+              dur="0.8s"
+              begin={`${i * 0.08}s`}
               fill="freeze"
             />
           </line>
         ))}
 
-        {/* ── Pulsing ring around avatar ── */}
+        {/* Pulsing ring around avatar */}
         <circle
           cx={centerX}
           cy={centerY}
@@ -400,7 +556,7 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
           fill="none"
           stroke={color}
           strokeWidth="2"
-          strokeOpacity="0.5"
+          strokeOpacity="0.4"
         >
           <animate
             attributeName="r"
@@ -408,15 +564,10 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
             dur="3s"
             repeatCount="indefinite"
           />
-          <animate
-            attributeName="stroke-opacity"
-            values="0.5;0.2;0.5"
-            dur="3s"
-            repeatCount="indefinite"
-          />
+          <animate attributeName="stroke-opacity" values="0.4;0.15;0.4" dur="3s" repeatCount="indefinite" />
         </circle>
 
-        {/* ── Rotating outer ring ── */}
+        {/* Rotating outer ring */}
         <circle
           cx={centerX}
           cy={centerY}
@@ -424,7 +575,7 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
           fill="none"
           stroke={color}
           strokeWidth="1"
-          strokeOpacity="0.25"
+          strokeOpacity="0.2"
           strokeDasharray="6 3"
         >
           <animateTransform
@@ -437,22 +588,21 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
           />
         </circle>
 
-        {/* ── Skill nodes ── */}
+        {/* Skill nodes */}
         {skills.map((skill, i) => (
           <SkillNode
-            key={skill}
+            key={skill.id}
             skill={skill}
             x={nodePositions[i].x}
             y={nodePositions[i].y}
             index={i}
             agentColor={color}
-            isExpanded={expandedSkill === skill}
-            onToggle={handleToggleSkill}
-            onTrigger={handleTriggerSkill}
+            isSelected={selectedSkill?.id === skill.id}
+            onSelect={handleSelectSkill}
           />
         ))}
 
-        {/* ── Skill count badge ── */}
+        {/* Skill count badge */}
         <text
           x={centerX}
           y={centerY - avatarSize / 2 - 24}
@@ -467,7 +617,7 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
         </text>
       </svg>
 
-      {/* ── 3D Agent Avatar at center ── */}
+      {/* 3D Agent Avatar at center */}
       <div
         style={{
           position: "absolute",
@@ -488,68 +638,30 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
         />
       </div>
 
-      {/* Tooltip for expanded skill (HTML overlay for better text rendering) */}
-      {expandedSkill && (() => {
-        const idx = skills.indexOf(expandedSkill);
-        const pos = nodePositions[idx];
-        if (!pos) return null;
-        const info = SKILL_CATALOG[expandedSkill] || { description: "Custom skill", category: "operations" };
+      {/* Skill detail panel */}
+      <SkillDetailPanel
+        skill={selectedSkill}
+        agentColor={color}
+        onClose={() => setSelectedSkill(null)}
+        onRun={handleTriggerSkill}
+      />
 
-        return (
-          <div
-            className="skills-graph__tooltip"
-            style={{
-              position: "absolute",
-              left: `${pos.x}px`,
-              top: `${pos.y + 32}px`,
-              transform: "translateX(-50%)",
-              background: "rgba(15, 18, 30, 0.95)",
-              border: `1px solid ${color}40`,
-              borderRadius: "10px",
-              padding: "10px 14px",
-              maxWidth: "220px",
-              pointerEvents: "none",
-              zIndex: 10,
-              backdropFilter: "blur(8px)",
-            }}
-          >
-            <div style={{
-              color: "#E0E0E0",
-              fontSize: "12px",
-              fontWeight: 600,
-              fontFamily: "Inter, -apple-system, sans-serif",
-              marginBottom: "4px",
-            }}>
-              {expandedSkill}
-            </div>
-            <div style={{
-              color: "#999",
-              fontSize: "10px",
-              fontFamily: "Inter, -apple-system, sans-serif",
-              lineHeight: 1.4,
-            }}>
-              {info.description}
-            </div>
-            <div style={{
-              marginTop: "6px",
-              display: "inline-block",
-              background: `${CATEGORY_COLORS[info.category] || color}20`,
-              color: CATEGORY_COLORS[info.category] || color,
-              fontSize: "9px",
-              fontWeight: 600,
-              padding: "2px 8px",
-              borderRadius: "6px",
-              fontFamily: "Inter, -apple-system, sans-serif",
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-            }}>
-              {info.category}
-            </div>
-          </div>
-        );
-      })()}
+      {/* Click-to-select hint */}
+      {!selectedSkill && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "12px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            color: "#666",
+            fontSize: "11px",
+            fontFamily: "Inter, -apple-system, sans-serif",
+          }}
+        >
+          Click a skill to view details
+        </div>
+      )}
     </div>
   );
 }
-
-export { SKILL_CATALOG, FALLBACK_SKILLS };
