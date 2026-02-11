@@ -23,8 +23,8 @@ function SceneContent() {
       {/* Camera controller — handles presets, agent focus, cinematic orbit */}
       <CameraController />
 
-      {/* Very subtle fog — pushed far out for wider layout */}
-      <fog attach="fog" args={["#1a1820", 80, 180]} />
+      {/* Very subtle fog — pushed far out for massive layout */}
+      <fog attach="fog" args={["#1a1820", 180, 500]} />
 
       {/* Lighting rig */}
       <Lighting />
@@ -61,10 +61,10 @@ export default function Scene() {
         toneMappingExposure: 1.5,
       }}
       camera={{
-        position: [30, 25, 30],
+        position: [120, 85, 120],
         fov: 45,
         near: 0.1,
-        far: 250,
+        far: 600,
       }}
       style={{ position: "absolute", top: 0, left: 0 }}
     >

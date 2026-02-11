@@ -11,11 +11,11 @@ const ARRIVE_THRESHOLD = 0.05;
 
 const PRESETS = {
   overview: {
-    position: new THREE.Vector3(42, 32, 42),
+    position: new THREE.Vector3(120, 85, 120),
     target: new THREE.Vector3(0, 0, 0),
   },
   topdown: {
-    position: new THREE.Vector3(0.001, 55, 0.001),
+    position: new THREE.Vector3(0.001, 160, 0.001),
     target: new THREE.Vector3(0, 0, 0),
   },
 };
@@ -24,7 +24,7 @@ function agentFocusCamera(role) {
   const zone = ZONE_POSITIONS[role];
   if (!zone) {
     return {
-      position: new THREE.Vector3(42, 32, 42),
+      position: new THREE.Vector3(120, 85, 120),
       target: new THREE.Vector3(0, 0, 0),
     };
   }
@@ -43,10 +43,10 @@ function agentFocusCamera(role) {
   // by going in the OPPOSITE direction from the agent
   const cameraPos = agentPos
     .clone()
-    .sub(dir.multiplyScalar(14))  // Move toward center (in front of agent)
-    .add(new THREE.Vector3(0, 8, 0));  // Raise camera height
+    .sub(dir.multiplyScalar(35))  // Move toward center (in front of agent)
+    .add(new THREE.Vector3(0, 18, 0));  // Raise camera height
 
-  const targetPos = agentPos.clone().add(new THREE.Vector3(0, 3, 0));
+  const targetPos = agentPos.clone().add(new THREE.Vector3(0, 5, 0));
 
   return { position: cameraPos, target: targetPos };
 }
@@ -59,7 +59,7 @@ export default function CameraController() {
   const cameraPreset = useAgentStore((s) => s.cameraPreset);
   const agents = useAgentStore((s) => s.agents);
 
-  const goalPosition = useRef(new THREE.Vector3(42, 32, 42));
+  const goalPosition = useRef(new THREE.Vector3(120, 85, 120));
   const goalTarget = useRef(new THREE.Vector3(0, 0, 0));
   const isTransitioning = useRef(false);
   const isCinematic = useRef(false);

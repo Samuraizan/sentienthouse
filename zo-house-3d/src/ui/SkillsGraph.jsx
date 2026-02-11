@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import useAgentStore from "../store/agentStore.js";
+import AgentAvatar3D from "./AgentAvatar3D.jsx";
 
 /**
  * SkillsGraph.jsx — Network/mind-map visualization of an agent's skills (#22)
@@ -276,11 +277,12 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
 
   const color = agentColor || agent?.color || "#8888ff";
   const name = agentName || agent?.name || agentId;
-  const initial = name.charAt(0).toUpperCase();
 
   const centerX = dimensions.width / 2;
   const centerY = dimensions.height / 2;
-  const radius = Math.min(dimensions.width, dimensions.height) * 0.35;
+  // Larger radius to accommodate 3D avatar
+  const avatarSize = Math.min(dimensions.width, dimensions.height) * 0.32;
+  const radius = Math.min(dimensions.width, dimensions.height) * 0.42;
 
   const nodePositions = useMemo(() => {
     return computeRadialLayout(skills.length, centerX, centerY, radius);
@@ -390,74 +392,50 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
           </line>
         ))}
 
-        {/* ── Pulsing ring around center ── */}
+        {/* ── Pulsing ring around 3D avatar ── */}
         <circle
           cx={centerX}
           cy={centerY}
-          r={32}
+          r={avatarSize / 2 + 8}
           fill="none"
           stroke={color}
-          strokeWidth="1"
-          strokeOpacity="0.3"
+          strokeWidth="2"
+          strokeOpacity="0.4"
         >
           <animate
             attributeName="r"
-            values="32;38;32"
+            values={`${avatarSize / 2 + 8};${avatarSize / 2 + 16};${avatarSize / 2 + 8}`}
             dur="3s"
             repeatCount="indefinite"
           />
           <animate
             attributeName="stroke-opacity"
-            values="0.3;0.1;0.3"
+            values="0.4;0.15;0.4"
             dur="3s"
             repeatCount="indefinite"
           />
         </circle>
 
-        {/* ── Center avatar circle ── */}
+        {/* ── Second outer ring ── */}
         <circle
           cx={centerX}
           cy={centerY}
-          r={28}
-          fill={color}
-          opacity="0.2"
-          filter="url(#center-glow)"
-        />
-        <circle
-          cx={centerX}
-          cy={centerY}
-          r={24}
-          fill="rgba(15, 18, 30, 0.9)"
+          r={avatarSize / 2 + 20}
+          fill="none"
           stroke={color}
-          strokeWidth="2"
-          strokeOpacity="0.8"
-        />
-        {/* Agent initial */}
-        <text
-          x={centerX}
-          y={centerY + 1}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fill={color}
-          fontSize="18"
-          fontWeight="700"
-          fontFamily="Inter, SF Pro Display, -apple-system, sans-serif"
+          strokeWidth="1"
+          strokeOpacity="0.2"
+          strokeDasharray="8 4"
         >
-          {initial}
-        </text>
-        {/* Agent name below avatar */}
-        <text
-          x={centerX}
-          y={centerY + 44}
-          textAnchor="middle"
-          fill="#ccc"
-          fontSize="10"
-          fontWeight="500"
-          fontFamily="Inter, -apple-system, sans-serif"
-          letterSpacing="0.5"
-        >
-          {name}
-        </text>
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            from={`0 ${centerX} ${centerY}`}
+            to={`360 ${centerX} ${centerY}`}
+            dur="20s"
+            repeatCount="indefinite"
+          />
+        </circle>
 
         {/* ── Skill nodes ── */}
         {skills.map((skill, i) => (
@@ -477,17 +455,38 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
         {/* ── Skill count badge ── */}
         <text
           x={centerX}
-          y={centerY - 38}
+          y={centerY - avatarSize / 2 - 20}
           textAnchor="middle"
           fill="#888"
-          fontSize="9"
+          fontSize="10"
           fontFamily="Inter, -apple-system, sans-serif"
-          fontWeight="500"
-          letterSpacing="1"
+          fontWeight="600"
+          letterSpacing="1.5"
         >
           {skills.length} SKILLS
         </text>
       </svg>
+
+      {/* ── 3D Agent Avatar at center ── */}
+      <div
+        style={{
+          position: "absolute",
+          left: centerX - avatarSize / 2,
+          top: centerY - avatarSize / 2,
+          width: avatarSize,
+          height: avatarSize,
+          pointerEvents: "auto",
+        }}
+      >
+        <AgentAvatar3D
+          agentId={agentId}
+          agentColor={color}
+          agentName={name}
+          status={agent?.status || "offline"}
+          currentTask={agent?.currentTask}
+          size={avatarSize}
+        />
+      </div>
 
       {/* Tooltip for expanded skill (HTML overlay for better text rendering) */}
       {expandedSkill && (() => {
