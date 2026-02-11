@@ -36,21 +36,23 @@ function gatewayCall(method) {
       return resolve(cached.data);
     }
 
-    const cmd = `${OPENCLAW_BIN} gateway call ${method} --token ${GATEWAY_TOKEN} 2>/dev/null`;
+    const isWin = process.platform === "win32";
+    const cmd = `${OPENCLAW_BIN} gateway call ${method} --token ${GATEWAY_TOKEN} ${isWin ? "2>NUL" : "2>/dev/null"}`;
 
     exec(cmd, { timeout: 15000, maxBuffer: 2 * 1024 * 1024 }, (error, stdout, stderr) => {
       if (error && !stdout) {
         return reject(new Error(`Gateway call "${method}" failed: ${error.message}`));
       }
 
-      const raw = (stdout || "").trim();
+      // Strip ANSI escape codes from output
+      const raw = (stdout || "").replace(/\x1b\[[0-9;]*m/g, "").trim();
       if (!raw) {
         return reject(new Error(`Gateway call "${method}" returned empty output`));
       }
 
       try {
         // Find the start of JSON in the output.
-        // openclaw outputs "Gateway call: <method>\n{...}" — skip the header.
+        // openclaw outputs headers/warnings then "Gateway call: <method>\n{...}" — skip everything before JSON.
         let jsonStart = -1;
         for (let i = 0; i < raw.length; i++) {
           const ch = raw[i];

@@ -54,6 +54,11 @@ const useAgentStore = create((set, get) => ({
   presence: {},
   // keyed by agent id, value = presence info from gateway
 
+  // ── Agent visits/meetings ───────────────────────────────────
+  // Tracks when agents visit each other for collaboration
+  agentVisits: {},
+  // keyed by agent id, value = { visiting: targetAgentId, meetingWith: agentId, returnTime: timestamp }
+
   // ── UI state ─────────────────────────────────────────────────
   selectedAgentId: null,
   showAgentGrid: false,
@@ -82,6 +87,32 @@ const useAgentStore = create((set, get) => ({
   // Skill tree modal actions
   openSkillTree: (agentId) => set({ skillTreeAgentId: agentId }),
   closeSkillTree: () => set({ skillTreeAgentId: null }),
+
+  // Agent visit/meeting actions
+  startVisit: (agentId, targetAgentId) =>
+    set((state) => ({
+      agentVisits: {
+        ...state.agentVisits,
+        [agentId]: { visiting: targetAgentId, meetingWith: null, startTime: Date.now() },
+      },
+    })),
+
+  startMeeting: (agentId, withAgentId) =>
+    set((state) => ({
+      agentVisits: {
+        ...state.agentVisits,
+        [agentId]: { ...state.agentVisits[agentId], meetingWith: withAgentId },
+      },
+    })),
+
+  endVisit: (agentId) =>
+    set((state) => {
+      const newVisits = { ...state.agentVisits };
+      delete newVisits[agentId];
+      return { agentVisits: newVisits };
+    }),
+
+  getAgentVisit: (agentId) => get().agentVisits[agentId] || null,
 
   /**
    * Set the active camera preset.

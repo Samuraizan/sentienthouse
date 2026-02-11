@@ -33,47 +33,61 @@ const PLATFORM_Y_OFFSET = 0.12;
 
 export default function AgentCharacters() {
   const agents = useAgentStore((state) => state.agents);
-  const selectedAgentId = useAgentStore((state) => state.selectedAgentId);
-  const setSelectedAgent = useAgentStore((state) => state.setSelectedAgent);
+  const skillTreeAgentId = useAgentStore((state) => state.skillTreeAgentId);
+  const openSkillTree = useAgentStore((state) => state.openSkillTree);
+  const closeSkillTree = useAgentStore((state) => state.closeSkillTree);
 
   const handleSelect = useCallback(
     (agentId) => {
-      if (selectedAgentId === agentId) {
-        setSelectedAgent(null);
+      // Toggle: if already open for this agent, close it; otherwise open
+      if (skillTreeAgentId === agentId) {
+        closeSkillTree();
       } else {
-        setSelectedAgent(agentId);
+        openSkillTree(agentId);
       }
     },
-    [selectedAgentId, setSelectedAgent]
+    [skillTreeAgentId, openSkillTree, closeSkillTree]
   );
 
-  const characters = useMemo(() => {
-    return agents
-      .map((agent) => {
-        const config = CHARACTER_CONFIG[agent.id];
-        if (!config) return null;
+  // Build character data and positions map for inter-agent visits
+  const { characters, allAgentPositions } = useMemo(() => {
+    const charList = [];
+    const positionsMap = {};
 
-        const zone = ZONE_POSITIONS[agent.role];
-        if (!zone) return null;
+    agents.forEach((agent) => {
+      const config = CHARACTER_CONFIG[agent.id];
+      if (!config) return;
 
-        const position = [
-          zone.position[0],
-          zone.position[1] + PLATFORM_Y_OFFSET,
-          zone.position[2],
-        ];
+      const zone = ZONE_POSITIONS[agent.role];
+      if (!zone) return;
 
-        return {
-          agentId: agent.id,
-          modelPath: config.model,
-          position,
-          color: config.tint,
-          status: agent.status,
-          agentColor: agent.color,
-          agentName: agent.name,
-          agentRole: zone.label,
-        };
-      })
-      .filter(Boolean);
+      const position = [
+        zone.position[0],
+        zone.position[1] + PLATFORM_Y_OFFSET,
+        zone.position[2],
+      ];
+
+      // Store position for inter-agent visits
+      positionsMap[agent.id] = {
+        position,
+        zoneSize: zone.size,
+      };
+
+      charList.push({
+        agentId: agent.id,
+        modelPath: config.model,
+        position,
+        zoneSize: zone.size,
+        color: config.tint,
+        status: agent.status,
+        agentColor: agent.color,
+        agentName: agent.name,
+        agentRole: zone.label,
+        currentTask: agent.currentTask, // Pass real task from backend
+      });
+    });
+
+    return { characters: charList, allAgentPositions: positionsMap };
   }, [agents]);
 
   return (
@@ -86,11 +100,14 @@ export default function AgentCharacters() {
           agentRole={char.agentRole}
           modelPath={char.modelPath}
           position={char.position}
+          zoneSize={char.zoneSize}
           color={char.color}
           status={char.status}
           agentColor={char.agentColor}
-          isSelected={selectedAgentId === char.agentId}
+          isSelected={skillTreeAgentId === char.agentId}
           onSelect={handleSelect}
+          allAgentPositions={allAgentPositions}
+          currentTask={char.currentTask}
         />
       ))}
     </group>

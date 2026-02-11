@@ -30,20 +30,20 @@ const RESET_BUTTON = {
 export default function CameraControls() {
   const cameraPreset = useAgentStore((s) => s.cameraPreset);
   const setCameraPreset = useAgentStore((s) => s.setCameraPreset);
-  const clearSelectedAgent = useAgentStore((s) => s.clearSelectedAgent);
-  const selectedAgentId = useAgentStore((s) => s.selectedAgentId);
+  const closeSkillTree = useAgentStore((s) => s.closeSkillTree);
+  const skillTreeAgentId = useAgentStore((s) => s.skillTreeAgentId);
 
   const handlePreset = useCallback(
     (presetId) => {
       if (presetId === "reset") {
-        clearSelectedAgent();
+        closeSkillTree();
         setCameraPreset("overview");
         return;
       }
-      clearSelectedAgent();
+      closeSkillTree();
       setCameraPreset(presetId);
     },
-    [setCameraPreset, clearSelectedAgent]
+    [setCameraPreset, closeSkillTree]
   );
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function CameraControls() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [handlePreset]);
 
-  const activeId = selectedAgentId ? null : cameraPreset;
+  const activeId = skillTreeAgentId ? null : cameraPreset;
 
   return (
     <div className="camera-controls">

@@ -35,15 +35,18 @@ function agentFocusCamera(role) {
     zone.position[2]
   );
 
+  // Direction FROM center TO agent (agents face center, so we go opposite direction)
   const dir = agentPos.clone().normalize();
   if (dir.length() < 0.01) dir.set(0, 0, 1);
 
+  // Position camera IN FRONT of agent (between agent and center)
+  // by going in the OPPOSITE direction from the agent
   const cameraPos = agentPos
     .clone()
-    .add(dir.multiplyScalar(12))
-    .add(new THREE.Vector3(0, 10, 0));
+    .sub(dir.multiplyScalar(14))  // Move toward center (in front of agent)
+    .add(new THREE.Vector3(0, 8, 0));  // Raise camera height
 
-  const targetPos = agentPos.clone().add(new THREE.Vector3(0, 2.5, 0));
+  const targetPos = agentPos.clone().add(new THREE.Vector3(0, 3, 0));
 
   return { position: cameraPos, target: targetPos };
 }
@@ -52,7 +55,7 @@ export default function CameraController() {
   const controlsRef = useRef();
   const { camera } = useThree();
 
-  const selectedAgentId = useAgentStore((s) => s.selectedAgentId);
+  const skillTreeAgentId = useAgentStore((s) => s.skillTreeAgentId);
   const cameraPreset = useAgentStore((s) => s.cameraPreset);
   const agents = useAgentStore((s) => s.agents);
 
@@ -63,8 +66,8 @@ export default function CameraController() {
   const cinematicAngle = useRef(0);
 
   useEffect(() => {
-    if (selectedAgentId) {
-      const agent = agents.find((a) => a.id === selectedAgentId);
+    if (skillTreeAgentId) {
+      const agent = agents.find((a) => a.id === skillTreeAgentId);
       if (agent) {
         const { position, target } = agentFocusCamera(agent.role);
         goalPosition.current.copy(position);
@@ -87,7 +90,7 @@ export default function CameraController() {
     goalPosition.current.copy(preset.position);
     goalTarget.current.copy(preset.target);
     isTransitioning.current = true;
-  }, [selectedAgentId, cameraPreset, agents]);
+  }, [skillTreeAgentId, cameraPreset, agents]);
 
   useFrame((state, delta) => {
     if (!controlsRef.current) return;

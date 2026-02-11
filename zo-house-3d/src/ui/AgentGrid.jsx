@@ -40,7 +40,7 @@ const ROLE_LABELS = {
 export default function AgentGrid() {
   const showAgentGrid = useAgentStore((s) => s.showAgentGrid);
   const closeAgentGrid = useAgentStore((s) => s.closeAgentGrid);
-  const setSelectedAgent = useAgentStore((s) => s.setSelectedAgent);
+  const openSkillTree = useAgentStore((s) => s.openSkillTree);
   const agents = useAgentStore((s) => s.agents);
 
   const handleEscape = useCallback((e) => {
@@ -55,7 +55,7 @@ export default function AgentGrid() {
   }, [handleEscape]);
 
   const handleAgentClick = (agentId) => {
-    setSelectedAgent(agentId);
+    openSkillTree(agentId);
     closeAgentGrid();
   };
 

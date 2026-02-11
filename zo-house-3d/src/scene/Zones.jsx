@@ -32,49 +32,49 @@ import ZonePlatform from "./ZonePlatform";
 export const ZONE_POSITIONS = {
   director: {
     position: [0, 0, 0],
-    size: [10, 10],
+    size: [14, 14],  // Expanded for movement
     color: "#FFD700",
     label: "HQ",
     role: "director",
   },
   "captain-blrxzo": {
-    position: [-24, 0, -3],
-    size: [8, 8],
+    position: [-28, 0, -4],
+    size: [12, 12],  // Expanded for movement
     color: "#00BFFF",
     label: "BLRxZo",
     role: "captain-blrxzo",
   },
   "captain-wtfxzo": {
-    position: [24, 0, -3],
-    size: [8, 8],
+    position: [28, 0, -4],
+    size: [12, 12],  // Expanded for movement
     color: "#FF6347",
     label: "WTFxZo",
     role: "captain-wtfxzo",
   },
   events: {
-    position: [-15, 0, 20],
-    size: [7, 7],
+    position: [-18, 0, 24],
+    size: [11, 11],  // Expanded for movement
     color: "#FF69B4",
     label: "Events",
     role: "events",
   },
   sales: {
-    position: [15, 0, 20],
-    size: [7, 7],
+    position: [18, 0, 24],
+    size: [11, 11],  // Expanded for movement
     color: "#2ECC71",
     label: "Sales",
     role: "sales",
   },
   bd: {
-    position: [-17, 0, -22],
-    size: [7, 7],
+    position: [-20, 0, -26],
+    size: [11, 11],  // Expanded for movement
     color: "#E67E22",
     label: "Business Dev",
     role: "bd",
   },
   "vibe-curator": {
-    position: [17, 0, -22],
-    size: [7, 7],
+    position: [20, 0, -26],
+    size: [11, 11],  // Expanded for movement
     color: "#9B59B6",
     label: "Vibe",
     role: "vibe-curator",
@@ -96,7 +96,7 @@ const ROLE_LABELS = {
 
 export default function Zones() {
   const agents = useAgentStore((state) => state.agents);
-  const setSelectedAgent = useAgentStore((state) => state.setSelectedAgent);
+  const openSkillTree = useAgentStore((state) => state.openSkillTree);
 
   const zones = useMemo(() => {
     return agents
@@ -119,7 +119,7 @@ export default function Zones() {
   }, [agents]);
 
   const handleClick = (agentId) => {
-    setSelectedAgent(agentId);
+    openSkillTree(agentId);
   };
 
   return (

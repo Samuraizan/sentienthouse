@@ -5,6 +5,7 @@ import Floor from "./Floor";
 import Lighting from "./Lighting";
 import Zones from "./Zones";
 import AgentCharacters from "./AgentCharacters";
+import AgentConnections from "./AgentConnections";
 import CameraController from "./CameraController";
 import Effects from "./Effects";
 import ChatBubbles from "./ChatBubbles";
@@ -36,6 +37,9 @@ function SceneContent() {
 
       {/* 7 Animated Character Models — standing in their zones */}
       <AgentCharacters />
+
+      {/* Visual connection beams during agent meetings */}
+      <AgentConnections />
 
       {/* Chat bubbles above active agents */}
       <ChatBubbles />
