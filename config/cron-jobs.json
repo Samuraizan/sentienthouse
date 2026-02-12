@@ -463,6 +463,28 @@
         "mode": "none"
       },
       "state": {}
+    },
+    {
+      "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "agentId": "wanda",
+      "name": "Wanda Overnight Sales Strategy Research",
+      "enabled": true,
+      "createdAtMs": 1770868800000,
+      "updatedAtMs": 1770868800000,
+      "schedule": {
+        "kind": "every",
+        "everyMs": 2700000
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "SALES STRATEGY DEEP RESEARCH — You are running a 16-phase overnight research task. Read workspaces/sales/RESEARCH_PROGRESS.md to find your current phase (first PENDING row). Then read the skill definition at workspaces/sales/skills/sales-strategy-research/SKILL.md for detailed instructions on what to do for that phase. Execute ONLY that one phase. Query the specified data source, analyze the data, and append your structured findings (bullet points, not prose) to workspaces/sales/SALES_STRATEGY_2026.md under the correct section header. Update RESEARCH_PROGRESS.md to mark the phase DONE with timestamp and one-line key finding. Send a brief status to Samurai (Telegram 1275114944): 'Phase N/16 complete: [topic]'. IMPORTANT: Keep token usage LOW — be concise, use bullets. Only do ONE phase per invocation. If all 16 phases are DONE, send final report to both Samurai (1275114944) and Boldrin (817242399) and note RESEARCH COMPLETE in the progress file."
+      },
+      "delivery": {
+        "mode": "announce"
+      },
+      "state": {}
     }
   ]
 }
