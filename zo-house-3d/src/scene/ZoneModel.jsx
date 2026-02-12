@@ -1,8 +1,9 @@
 
 import React, { useEffect, useMemo } from "react";
-import { useGLTF } from "@react-three/drei";
+import { useGLTF, Html } from "@react-three/drei";
 import { RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
+import useAgentStore from "../store/agentStore";
 
 /**
  * ZoneModel.jsx
@@ -90,6 +91,68 @@ function ExtendedPlatform() {
     );
 }
 
+/**
+ * BigScreenText — "WE ARE ALIVE" on the main monitor when gateway is connected.
+ * Positioned to overlay the big screen mesh in the GLTF model.
+ */
+function BigScreenText() {
+    const connected = useAgentStore((s) => s.gatewayStatus.connected);
+    const agentCount = useAgentStore((s) => s.gatewayStatus.agentCount);
+
+    return (
+        <Html
+            position={[1.5, 10.5, -7.5]}
+            center
+            distanceFactor={12}
+            occlude={false}
+            transform
+            rotation={[0, 0, 0]}
+            style={{ pointerEvents: "none", userSelect: "none" }}
+            zIndexRange={[50, 0]}
+        >
+            <div style={{
+                width: "240px",
+                textAlign: "center",
+                fontFamily: "Inter, SF Pro Display, -apple-system, monospace",
+            }}>
+                {connected ? (
+                    <>
+                        <div style={{
+                            fontSize: "22px",
+                            fontWeight: 800,
+                            color: "#00ff88",
+                            textShadow: "0 0 20px rgba(0,255,136,0.6), 0 0 40px rgba(0,255,136,0.3)",
+                            letterSpacing: "4px",
+                            textTransform: "uppercase",
+                        }}>
+                            We Are Alive
+                        </div>
+                        <div style={{
+                            fontSize: "10px",
+                            fontWeight: 500,
+                            color: "rgba(0,255,136,0.5)",
+                            marginTop: "6px",
+                            letterSpacing: "2px",
+                        }}>
+                            {agentCount}/7 AGENTS ONLINE
+                        </div>
+                    </>
+                ) : (
+                    <div style={{
+                        fontSize: "16px",
+                        fontWeight: 600,
+                        color: "#ff4444",
+                        textShadow: "0 0 15px rgba(255,68,68,0.5)",
+                        letterSpacing: "3px",
+                    }}>
+                        DISCONNECTED
+                    </div>
+                )}
+            </div>
+        </Html>
+    );
+}
+
 export default function ZoneModel() {
     const { scene } = useGLTF("/models/zones/scene.gltf");
 
@@ -121,6 +184,9 @@ export default function ZoneModel() {
                     rotation={[0, 0, 0]}
                 />
             </RigidBody>
+
+            {/* "WE ARE ALIVE" text overlaid on the big screen */}
+            <BigScreenText />
         </group>
     );
 }

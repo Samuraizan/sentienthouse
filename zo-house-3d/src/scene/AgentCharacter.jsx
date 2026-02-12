@@ -46,9 +46,10 @@ const CHEER_ANIMS = ["Cheer", "Jump"];
 // Equipment footprint: machines fill X[-31,30] Z[-26,15] on center island
 const ZONE_INTERACTIONS = {
   hq: [
-    // Spread across 2x island — equipment stays centered, agents roam the perimeter
-    { id: "command-desk", offset: [0, 0, 25], activity: "Reviewing strategy", emoji: "💻", duration: [12, 20] },
-    { id: "display-wall", offset: [10, 0, 30], activity: "Checking analytics", emoji: "📊", duration: [8, 15] },
+    // command-desk and display-wall near the big screen (back of island, -Z)
+    { id: "command-desk", offset: [2, 0, -5], activity: "Reviewing strategy", emoji: "💻", duration: [12, 20], faceAngle: Math.PI },
+    { id: "display-wall", offset: [-2, 0, -8], activity: "Checking analytics", emoji: "📊", duration: [8, 15], faceAngle: Math.PI },
+    // Other desks spread around the island perimeter
     { id: "suki-desk", offset: [-22, 0, 26], activity: "Event coordination", emoji: "📝", duration: [10, 18] },
     { id: "wanda-desk", offset: [22, 0, 26], activity: "Sales pipeline review", emoji: "📈", duration: [10, 18] },
     { id: "yana-desk", offset: [-28, 0, 5], activity: "BD research", emoji: "🌍", duration: [10, 18] },
@@ -438,12 +439,16 @@ function AgentCharacter({
       // Activity text + emoji were already set by pickNextActivity idle roaming
     }
 
-    // Face towards zone center
-    const zc = zoneCenter;
-    const dx = zc[0] - s.currentPos.x;
-    const dz = zc[2] - s.currentPos.z;
-    if (Math.abs(dx) > 0.5 || Math.abs(dz) > 0.5) {
-      s.targetRotation = Math.atan2(dx, dz);
+    // Face direction: use explicit faceAngle if defined, otherwise face zone center
+    if (interaction.faceAngle !== undefined) {
+      s.targetRotation = interaction.faceAngle;
+    } else {
+      const zc = zoneCenter;
+      const dx = zc[0] - s.currentPos.x;
+      const dz = zc[2] - s.currentPos.z;
+      if (Math.abs(dx) > 0.5 || Math.abs(dz) > 0.5) {
+        s.targetRotation = Math.atan2(dx, dz);
+      }
     }
 
     startIdle();
@@ -1037,10 +1042,7 @@ function AgentCharacter({
           </>
         )}
 
-        {/* Activity glows */}
-        {isWorking && <pointLight position={[0, 2, 0]} color="#22c55e" intensity={1.5} distance={4} decay={2} />}
-        {isInMeeting && <pointLight position={[0, 2, 0]} color="#3b82f6" intensity={2} distance={5} decay={2} />}
-        {isThinking && <pointLight position={[0, 2, 0]} color="#a855f7" intensity={1.5} distance={4} decay={2} />}
+        {/* Activity glows removed — cleaner look */}
       </group>
     </group>
   );

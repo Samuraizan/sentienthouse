@@ -42,7 +42,7 @@ export const ZONE_POSITIONS = {
  */
 export const ZONE_HOME_OFFSETS = {
   // HQ agents: spread around 2x island (equipment occupies center X[-31,30] Z[-26,15])
-  zomadprime: [0, 0, 30],     // front center — commanding view
+  zomadprime: [2, 0, -5],     // in front of the big screen, facing it
   suki: [-22, 0, 26],         // front-left quadrant
   wanda: [22, 0, 26],         // front-right quadrant
   yana: [-28, 0, 0],          // left flank of equipment
