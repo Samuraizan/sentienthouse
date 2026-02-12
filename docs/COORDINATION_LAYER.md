@@ -17,26 +17,40 @@ If a skill fails any of these, it's not ready.
 
 ---
 
-## Current State (Audit Summary)
+## Current State (Audit Summary — Updated 2026-02-13)
 
 ### What Exists
-- 7 agents, 45 skill files
+- 7 agents, ~40 skill files (Suki's 7 old skills deleted, 1 new skill built)
 - Agents communicate via Telegram (OpenClaw gateway)
 - Skills are markdown files — Claude reads them as instructions
-- Cron scheduler triggers time-based skills (morning briefs, syncs)
+- Cron scheduler triggers time-based skills — **cleaned up to 6 active jobs** (was 19, 11 enabled, 8 disabled)
+- OpenClaw auth uses **v1 schema** (`"type":"token"`, `"provider":"anthropic"`)
+- All 7 agents share the same Anthropic API key
+- **Zo ecosystem awareness:** game.zo.xyz has event creation, RSVPs, venue matching, quote engine — agents know about it but don't duplicate it
 
-### What's Broken
-- **Data sources are vague** — skills say "check Google Sheets" without specifying which sheet, tab, row, or column
-- **No error handling** — if an API is down, the skill fails silently
-- **No handoffs** — agents work in silos; information doesn't flow between them
-- **Inconsistent triggers** — same concept, different phrases across agents
-- **Placeholders in production** — some skills literally cannot run
-- **google-workspace is copy-pasted** across all agents with zero customization
+### What's Working
+- **6 cron jobs active:** BLRxZo/WTFxZo morning-audit (daily), BLRxZo/WTFxZo agent-kot fudr sync (hourly), BLRxZo/WTFxZo PMS update (hourly)
+- **OpenClaw gateway** running on Windows PC as scheduled task
+- **3D Command Center** fully deterministic (no randomness), pirate characters, live agent status
+- **Suki rebuilt** with game.zo.xyz ecosystem awareness, proper Supabase integration
+- **event-to-ops handoff** built and defined (first inter-agent handoff)
+- **56 real event inquiries** in Supabase waiting to be processed
+
+### What's Still Broken
+- **5 of 7 handoffs not built** — agents still mostly work in silos
+- **Data sources vague** for non-captain agents — sales pipeline, BD pipeline, community tracking have no backing store
+- **No error handling** on most skills — if an API is down, skills fail silently
+- **Placeholders in production** — Yana's founder-outreach pricing, LOKI's Telegram ID
+- **google-workspace copy-pasted** across agents with zero customization
+- **Legacy file paths** — some skills still reference `/home/conscious-house/`
+- **WTFxZo daily-recap** uses wrong Luma API key (`$LUMA_API_KEY_BLRXZO` instead of `$LUMA_API_KEY_SFOXZO`)
 
 ### Quality Tiers
-- **Strong (14 skills):** Can use today with minor fixes
+- **Rebuilt (1 skill):** Suki's event-to-ops — built from scratch with proper Supabase integration
+- **Strong (14 skills):** Can use today with minor fixes (captain skills mostly)
 - **Needs Work (12 skills):** Fixable with data source clarification and error handling
-- **Weak/Broken (5+ skills):** Need complete rewrites
+- **Deleted / Pending Rebuild (7 skills):** Suki's old skills deleted; will be rebuilt from scratch
+- **Weak/Broken (5+ skills):** Need complete rewrites (LOKI, Yana, parts of Wanda)
 
 ---
 
@@ -202,26 +216,38 @@ Clear thresholds — not vibes.
 - Revenue tracking that feeds into captain financials
 - Post-event recap that's ready to post
 
-**Skills to rewrite:**
+**Status (2026-02-13): CLEAN SLATE REBUILD IN PROGRESS**
 
-| Skill | Status | What's Wrong | Fix |
-|-------|--------|-------------|-----|
-| event-inquiry | Needs Work | No rate card, Typeform trigger undefined | Create rate card section, define Typeform polling schedule |
-| luma-sync | Needs Work | No error handling, API pagination fragile | Add retry logic, validate date params, handle 429 rate limits |
-| rev-tracking | Needs Work | Helper script assumed, unclear sheet ownership | Document actual write method, specify which sheet owns event revenue |
-| event-marketing | Strong | Minor: LOKI dependency for graphics not formalized | Add explicit handoff to LOKI for cover image |
-| event-recap | Strong | Data dependency on rev-tracking timing | Specify: run rev-tracking first, then recap |
-| invoice-maker | Strong | GSTIN hardcoded, invoice counter location unknown | Move GSTIN to config, specify counter storage |
-| google-workspace | Weak | Generic | Rewrite for events: event calendar, vendor sheets, marketing folders |
+All 7 original skills were deleted on 2026-02-12. Suki's foundation docs (SOUL.md, TOOLS.md, IDENTITY.md, USER.md) have been rewritten with full game.zo.xyz ecosystem awareness. Skills are being rebuilt from scratch with proper Supabase integration.
 
-**Skills to add:**
+**Supabase data audit findings:**
+- `canonical_events` has 39 columns (not 34 as previously documented)
+- `event_inquiries` uses `host_name` not `first_name/last_name`
+- 56 real inquiries from companies like Devfolio, ETHGlobal, Monad, Coinbase — **all stuck at `inquiry_status: "new"`, none processed**
+- `event_rsvps` has 15 entries across 7 test events
+- `event_cultures` has 19 entries, all active
 
-| Skill | Category | Purpose |
-|-------|----------|---------|
-| day-of-event | action | Real-time coordination: attendee check-in, issue triage, live headcount, photographer coordination |
-| event-to-ops | handoff | When event is confirmed → send prep requirements to property captain (BLRxZo or WTFxZo) |
-| host-followup | action | Post-event: thank host, collect feedback, pitch repeat booking |
-| rate-card | report | Current venue rates by day/time/event type — single source of truth for event-inquiry |
+**Skills built:**
+
+| Skill | Category | Status | Notes |
+|-------|----------|--------|-------|
+| event-to-ops | handoff | DONE | Routes ops briefs to Captain by venue, notifies LOKI, confirms to Boldrin |
+
+**Skills to build (priority order):**
+
+| Skill | Category | Priority | Purpose |
+|-------|----------|----------|---------|
+| event-inquiry | triage | HIGH | Assess feasibility, GO/NO-GO, generate quote — with rate card, Typeform fields, Supabase |
+| luma-sync | sync | HIGH | Luma → Supabase sync with proper error handling, pagination, both properties |
+| rev-tracking | action | HIGH | Write event financials to Rev-Events tab in P&L sheets |
+| typeform-sync | sync | MEDIUM | Daily poll Typeform → Supabase `event_inquiries` |
+| rate-card | report | MEDIUM | Single source of truth for venue pricing |
+| day-of-event | action | MEDIUM | Real-time coordination: attendee check-in, issue triage, live headcount |
+| event-marketing | action | MEDIUM | Create Luma page + social posts with LOKI handoff for cover images |
+| event-recap | report | MEDIUM | Post-event analysis with data pull from Supabase + sheets |
+| invoice-maker | action | LOW | GST-compliant invoice generation |
+| host-followup | action | LOW | Post-event: thank host, collect feedback, pitch repeat booking |
+| google-workspace | action | LOW | Events-specific: event calendar, vendor sheets, marketing folders |
 
 ---
 
@@ -436,21 +462,23 @@ Standardized phrases humans can use. Each agent responds to their domain.
 
 ### Phase 1: Fix the Foundation (Week 1-2)
 
-**Whitefieldl:** Make every existing skill actually work with real data.
+**Goal:** Make every existing skill actually work with real data.
 
-1. Create the Data Source Registry as a shared document all agents reference
+1. ~~Create the Data Source Registry as a shared document all agents reference~~ — DONE (`docs/DATA_SOURCES.md`)
 2. Rewrite google-workspace skill per agent with specific sheet IDs, calendars, folders
 3. Fix all API references (Luma keys per property, Supabase access method, Google Sheets write path)
 4. Add error handling to every skill: "If [source] is unavailable: [fallback behavior]"
 5. Remove all placeholders (founder-outreach pricing, rate cards, vendor lists)
-6. Standardize trigger phrases (create glossary, update all skills)
+6. ~~Standardize trigger phrases (create glossary, update all skills)~~ — DONE (`docs/TRIGGERS.md`)
+
+**Suki special track:** Old skills deleted. Rebuilding from scratch in priority order (see Suki section above).
 
 ### Phase 2: Build the Handoffs (Week 3-4)
 
-**Whitefieldl:** Agents pass work to each other automatically.
+**Goal:** Agents pass work to each other automatically.
 
 7. Write `sale-to-ops` (Wanda → Captains + LOKI)
-8. Write `event-to-ops` (Suki → Captains)
+8. ~~Write `event-to-ops` (Suki → Captains)~~ — DONE (2026-02-12)
 9. Write `new-guest-onboard` (Captain check-in → LOKI)
 10. Write `incoming-guest-brief` (from sale-to-ops, received by Captains)
 11. Write `event-prep-checklist` (from event-to-ops, received by Captains)
@@ -458,7 +486,7 @@ Standardized phrases humans can use. Each agent responds to their domain.
 
 ### Phase 3: Add Missing Skills (Week 5-6)
 
-**Whitefieldl:** Fill the gaps between what SOUL.md promises and what skills deliver.
+**Goal:** Fill the gaps between what SOUL.md promises and what skills deliver.
 
 13. Write `day-of-event` (Suki)
 14. Write `discovery-call` (Wanda)
@@ -470,13 +498,16 @@ Standardized phrases humans can use. Each agent responds to their domain.
 
 ### Phase 4: Optimize (Week 7-8)
 
-**Whitefieldl:** Make the system proactive, not just reactive.
+**Goal:** Make the system proactive, not just reactive.
 
 20. Add anomaly detection to morning-briefing (vs yesterday, vs target, vs trend)
 21. Add auto-escalation rules (blocker > 48h → Samurai notification)
 22. Add re-engagement automation (LOKI scans for quiet members weekly)
 23. Create feedback loops (scorecard → agent improvement suggestions)
 24. Stress-test handoff chain end-to-end (new lead → booking → check-in → community → check-out → re-engage)
+
+### Completed Milestones
+- **2026-02-12:** Cron cleanup (19 → 6 active jobs), HEARTBEAT.md sync (all 7 agents), Goa → Whitefield refactor, OpenClaw auth v1 schema fix, 3D Command Center deterministic rewrite, Suki clean-slate rebuild started, event-to-ops handoff built
 
 ---
 

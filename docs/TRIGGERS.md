@@ -38,6 +38,11 @@ Samurai's DMs route to ZomadPrime (the director agent).
 | "teach [agent] the [skill] skill" | skill-sync | Copies and adapts a skill from one agent to another |
 
 ### Automatic (Cron)
+| When | Skill | What You Receive | Status |
+|------|-------|-----------------|--------|
+| — | — | No cron jobs active for ZomadPrime (removed during 2026-02-12 cleanup — dependencies not wired) | — |
+
+**Planned crons (will activate when skills are ready):**
 | When | Skill | What You Receive |
 |------|-------|-----------------|
 | 10:00 AM UTC daily | morning-briefing | Daily cross-property brief |
@@ -69,11 +74,14 @@ Darshan's DMs route to BLRxZo JR (Bangalore house captain).
 | "AC not working in room 204" | maintenance-triage | Triages as guest-impacting, high priority |
 | "mark P2 as done" | task-manager | Updates task status on shared board |
 
-### Automatic (Cron)
+### Automatic (Cron) — 3 active jobs
 | When | Skill | What You Receive |
 |------|-------|-----------------|
-| 8:00 AM IST daily | daily-recap | Morning property status |
-| 10:30 AM IST daily | morning-audit | Task board review |
+| 10:00 AM IST daily | morning-audit | Task board review + Telegram delivery |
+| Every 1 hour | agent-kot (fudr sync) | Gmail → Sheets (silent, no Telegram) |
+| Every 1 hour | PMS update | Supabase → Sheets (silent, no Telegram) |
+
+**Note:** daily-recap cron was removed (skill didn't exist, caused false 7 PM notifications).
 
 ### Incoming Handoffs (from other agents)
 | From | Skill | What Arrives |
@@ -104,11 +112,14 @@ Akhilesh's DMs route to WTFxZo JR (Whitefield house captain). Same skills as Dar
 | "maintenance: [description]" | maintenance-triage | Classify, route, log |
 | "mark P1 as done" | task-manager | Update shared task board |
 
-### Automatic (Cron)
+### Automatic (Cron) — 3 active jobs
 | When | Skill | What You Receive |
 |------|-------|-----------------|
-| 8:00 AM IST daily | daily-recap | Morning property status |
-| 10:30 AM IST daily | morning-audit | Task board review |
+| 10:00 AM IST daily | morning-audit | Task board review + Telegram delivery |
+| Every 1 hour | agent-kot (fudr sync) | Gmail → Sheets (silent, no Telegram) |
+| Every 1 hour | PMS update | Supabase → Sheets (silent, no Telegram) |
+
+**Note:** daily-recap cron was removed (skill didn't exist, caused false 7 PM notifications).
 
 ---
 
@@ -116,24 +127,32 @@ Akhilesh's DMs route to WTFxZo JR (Whitefield house captain). Same skills as Dar
 
 Boldrin's DMs route to Suki by default. He also manages Wanda and Yana — see switching below.
 
+**Status (2026-02-13):** Suki is in CLEAN SLATE REBUILD. All 7 original skills were deleted. Only `event-to-ops` is built. Skills marked (PLANNED) are not yet available.
+
 ### Reports
-| Say This | Skill | What You Get |
-|----------|-------|-------------|
-| "check registrations" / "how many signed up" | luma-sync | Current event registrations from Luma |
-| "event recap: [event name]" | event-recap | Post-event analysis: attendance, revenue, social metrics |
-| "revenue update" / "event PnL" | rev-tracking | Event revenue and cost breakdown |
+| Say This | Skill | What You Get | Status |
+|----------|-------|-------------|--------|
+| "check registrations" / "how many signed up" | luma-sync | Current event registrations from Luma | PLANNED |
+| "event recap: [event name]" | event-recap | Post-event analysis: attendance, revenue, social metrics | PLANNED |
+| "revenue update" / "event PnL" | rev-tracking | Event revenue and cost breakdown | PLANNED |
 
 ### Actions
-| Say This | Skill | What Happens |
-|----------|-------|-------------|
-| "new event inquiry" | event-inquiry | Assess feasibility, GO/NO-GO, generate quote |
-| "someone wants to host on [date]" | event-inquiry | Same — triggers inquiry assessment |
-| "promote [event name]" | event-marketing | Create Luma page + social posts (LinkedIn, X, Instagram, Farcaster) |
-| "create invoice for [event]" | invoice-maker | Generate GST-compliant invoice |
-| "event confirmed: [name]" | event-to-ops | Send prep requirements to property captain |
-| "event today: [name]" | day-of-event | Activate real-time coordination mode |
+| Say This | Skill | What Happens | Status |
+|----------|-------|-------------|--------|
+| "new event inquiry" | event-inquiry | Assess feasibility, GO/NO-GO, generate quote | PLANNED |
+| "someone wants to host on [date]" | event-inquiry | Same — triggers inquiry assessment | PLANNED |
+| "promote [event name]" | event-marketing | Create Luma page + social posts (LinkedIn, X, Instagram, Farcaster) | PLANNED |
+| "create invoice for [event]" | invoice-maker | Generate GST-compliant invoice | PLANNED |
+| "event confirmed: [name]" | event-to-ops | Send prep requirements to property captain | **LIVE** |
+| "GO on [event]" | event-to-ops | Same — sends ops brief to Captain + LOKI | **LIVE** |
+| "event today: [name]" | day-of-event | Activate real-time coordination mode | PLANNED |
 
 ### Automatic (Cron)
+| When | Skill | What You Receive | Status |
+|------|-------|-----------------|--------|
+| — | — | No cron jobs active for Suki (removed during 2026-02-12 cleanup) | — |
+
+**Planned crons (will activate when skills are built):**
 | When | Skill | What You Receive |
 |------|-------|-----------------|
 | Daily | luma-sync | Updated event registrations |
@@ -201,6 +220,11 @@ Pooja's DMs route to LOKI (vibe curator).
 | "content plan for this week" | content-calendar | Weekly themes, platforms, property stories |
 
 ### Automatic (Cron)
+| When | Skill | What You Receive | Status |
+|------|-------|-----------------|--------|
+| — | — | No cron jobs active for LOKI (removed during 2026-02-12 cleanup) | — |
+
+**Planned crons (will activate when skills are solid):**
 | When | Skill | What You Receive |
 |------|-------|-----------------|
 | 9:00 AM IST daily | daily-vibe | Morning community post |

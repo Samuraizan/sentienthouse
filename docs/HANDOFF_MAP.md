@@ -70,7 +70,6 @@ Action: Welcome message + WhatsApp group + community intro
 ```
 
 ---
-**WTFxZo JR (Captain — Whitefield)**: Operations, guest experience, maintenance
 
 ### 2. Events → Operations
 
@@ -335,14 +334,16 @@ NOTES:
 
 ## Handoff Implementation Checklist
 
-| # | Handoff Skill | From | To | Status |
-|---|--------------|------|-----|--------|
-| 1 | sale-to-ops | Wanda | Captain + LOKI | Not built |
-| 2 | event-to-ops | Suki | Captain + LOKI | Not built |
-| 3 | guest check-in → onboard | Captain | LOKI | Not built |
-| 4 | partnership-to-event | Yana | Suki | Not built |
-| 5 | daily data → morning-briefing | Captains | ZomadPrime | Partially built (fragile) |
-| 6 | low engagement → alert | LOKI | ZomadPrime | Not built |
-| 7 | shift-handoff | Captain | Night staff | Not built |
+| # | Handoff Skill | From | To | Status | Date |
+|---|--------------|------|-----|--------|------|
+| 1 | sale-to-ops | Wanda | Captain + LOKI | Not built | — |
+| 2 | event-to-ops | Suki | Captain + LOKI | **BUILT** — Supabase-integrated, routes by venue, notifies LOKI, confirms to Boldrin | 2026-02-12 |
+| 3 | guest check-in → onboard | Captain | LOKI | Not built | — |
+| 4 | partnership-to-event | Yana | Suki | Not built | — |
+| 5 | daily data → morning-briefing | Captains | ZomadPrime | Partially built (data-mediated only, fragile) | — |
+| 6 | low engagement → alert | LOKI | ZomadPrime | Not built | — |
+| 7 | shift-handoff | Captain | Night staff | Not built | — |
 
-**6 of 7 handoffs don't exist yet.** This is why the agents feel siloed.
+**5 of 7 handoffs don't exist yet.** event-to-ops is the first true inter-agent handoff. The daily data → morning-briefing flow is fragile (data-mediated, not skill-driven).
+
+*Last updated: 2026-02-13*

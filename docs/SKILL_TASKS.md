@@ -10,8 +10,8 @@ These skills exist but are broken or incomplete. Fix them first.
 
 ### Shared (All Agents)
 - [ ] **google-workspace** — Rewrite per agent with specific sheet IDs, calendars, and folders. Kill the copy-paste version. (7 rewrites: director, captain-blrxzo, captain-wtfxzo, events, sales, bd, vibe-curator)
-- [ ] **Data Source Registry** — Create `docs/DATA_SOURCES.md` with canonical list of every sheet ID, API key location, Supabase table, and file path. All skills reference this.
-- [ ] **Trigger Glossary** — Create `docs/TRIGGERS.md` mapping every natural phrase to the skill it activates, per agent.
+- [x] **Data Source Registry** — ~~Create `docs/DATA_SOURCES.md`~~ DONE. Canonical list of every sheet ID, API key location, Supabase table, and file path.
+- [x] **Trigger Glossary** — ~~Create `docs/TRIGGERS.md`~~ DONE. Maps every natural phrase to the skill it activates, per agent.
 
 ### ZomadPrime (Director)
 - [ ] **morning-briefing** — REWRITE. Add exact data sources (sheet IDs, cell ranges). Add anomaly detection (vs yesterday, vs target). Cap output at 15 lines. Add fallback for unavailable data.
@@ -36,13 +36,20 @@ These skills exist but are broken or incomplete. Fix them first.
 - [ ] **maintenance-triage** — FIX. Same fixes, Whitefield-specific vendors.
 - [ ] **staff-report** — CREATE. WTFxZo doesn't have this skill. Mirror BLRxZo version for Whitefield.
 
-### Suki (Events)
-- [ ] **event-inquiry** — FIX. Create rate card section with actual pricing by day/time/event type. Define Typeform polling schedule (how inquiries reach Suki).
-- [ ] **luma-sync** — FIX. Add retry logic for API failures. Validate date params before query. Handle 429 rate limits. Add fallback for API downtime.
-- [ ] **rev-tracking** — FIX. Document actual write method (not assumed helper script). Specify which sheet owns event revenue. Clarify row lookup.
-- [ ] **event-recap** — FIX (minor). Add explicit dependency: run rev-tracking before recap. Handle case where revenue data isn't ready yet.
-- [ ] **invoice-maker** — FIX (minor). Move GSTIN to config/reference. Specify where invoice counter is stored.
-- [ ] **event-marketing** — FIX (minor). Formalize LOKI dependency for cover image design. Add handoff step.
+### Suki (Events) — CLEAN SLATE REBUILD
+All 7 original skills deleted on 2026-02-12. Foundation docs (SOUL.md, TOOLS.md, IDENTITY.md, USER.md) rewritten with game.zo.xyz ecosystem awareness. Rebuilding from scratch with proper Supabase integration.
+
+- [ ] **event-inquiry** — BUILD. Rate card, Typeform fields, Supabase event_inquiries integration, GO/NO-GO assessment.
+- [ ] **luma-sync** — BUILD. Luma → Supabase sync with retry logic, pagination, 429 handling, both property keys.
+- [ ] **rev-tracking** — BUILD. Write event financials to Rev-Events tab in P&L sheets via Google Sheets API.
+- [ ] **typeform-sync** — BUILD (NEW). Daily poll Typeform → Supabase `event_inquiries`.
+- [ ] **event-marketing** — BUILD. Luma page + social posts with LOKI handoff for cover images.
+- [ ] **event-recap** — BUILD. Post-event analysis pulling data from Supabase + sheets.
+- [ ] **day-of-event** — BUILD. Real-time coordination: check-in tracking, headcount, issue triage.
+- [ ] **invoice-maker** — BUILD. GST-compliant invoice with GSTIN from config, counter storage.
+- [ ] **rate-card** — BUILD (NEW). Single source of truth for venue pricing by day/time/event type.
+- [ ] **host-followup** — BUILD (NEW). Thank host, collect feedback, pitch repeat booking.
+- [ ] **google-workspace** — BUILD. Events-specific: event calendar, vendor sheets, marketing folders.
 
 ### Wanda (Sales)
 - [ ] **lead-qualify** — FIX. Add B2B/corporate scoring track alongside individual traveler track.
@@ -71,7 +78,7 @@ These skills don't exist yet. They're the connective tissue between agents.
 - [ ] **sale-to-ops** (Wanda) — HANDOFF. When booking confirmed: send guest name, dates, preferences, payment status, special requests to property captain + LOKI. Trigger: "booking confirmed for [name]".
 
 ### Suki → Captains
-- [ ] **event-to-ops** (Suki) — HANDOFF. When event confirmed: send venue requirements, AV setup, catering needs, expected headcount, timeline to property captain. Trigger: "event confirmed: [name]".
+- [x] **event-to-ops** (Suki) — HANDOFF. DONE (2026-02-12). Routes ops brief to Captain by venue (Koramangala → BLRxZo JR, Whitefield → WTFxZo JR), notifies LOKI with vibe brief, confirms to Boldrin. Pulls from Supabase `event_inquiries` or `canonical_events` with smart defaults.
 
 ### Captains → LOKI
 - [ ] **new-guest-onboard** (LOKI) — HANDOFF. Receives guest brief from captain check-in. Sends welcome message, adds to WhatsApp, schedules community intro. Auto-triggered.
@@ -137,14 +144,23 @@ After all skills are solid, make the system proactive.
 
 ## Progress Tracker
 
-| Phase | Total | Done | Remaining |
-|-------|-------|------|-----------|
-| Phase 1: Fix Foundation | 38 | 0 | 38 |
-| Phase 2: Build Handoffs | 7 | 0 | 7 |
-| Phase 3: Missing Skills | 14 | 0 | 14 |
-| Phase 4: Optimize | 5 | 0 | 5 |
-| **Total** | **64** | **0** | **64** |
+| Phase | Total | Done | Remaining | Notes |
+|-------|-------|------|-----------|-------|
+| Phase 1: Fix Foundation | 38 | 2 | 36 | DATA_SOURCES.md + TRIGGERS.md created. Suki old skills deleted (will rebuild from scratch — adds 4 new tasks). |
+| Phase 2: Build Handoffs | 7 | 1 | 6 | event-to-ops DONE (2026-02-12) |
+| Phase 3: Missing Skills | 14 | 0 | 14 | |
+| Phase 4: Optimize | 5 | 0 | 5 | |
+| **Total** | **64** | **3** | **61** | |
+
+### Other Completed Work (not in original task list)
+- Cron cleanup: 19 → 6 active jobs (removed broken/duplicate/orphan crons)
+- HEARTBEAT.md sync: all 7 agents aligned with actual cron schedule
+- Goa → Whitefield refactor: all references updated
+- OpenClaw auth v1 schema fix: all 7 agents re-authed
+- 3D Command Center: deterministic rewrite (removed 25 Math.random calls)
+- Suki foundation docs rebuilt with game.zo.xyz ecosystem awareness
+- Supabase data audit: discovered 56 unprocessed event inquiries
 
 ---
 
-*Last updated: 2026-02-12*
+*Last updated: 2026-02-13*

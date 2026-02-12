@@ -35,9 +35,17 @@ In Vercel dashboard, add your custom domain and point DNS to Vercel.
 ### System Requirements
 
 - Windows 10/11
-- Node.js 22+
-- 4GB+ RAM
+- Node.js 22+ (v22.14.0 currently installed)
+- 4GB+ RAM (current: AMD Ryzen 9 7950X3D, RTX 4090, 64GB)
 - Always-on (set power settings to prevent sleep)
+- Tailscale for SSH access and Funnel
+
+### CRITICAL: Mac vs Windows Runtime Split
+- **Mac repo** = dev/docs copy, NOT the runtime
+- **Windows PC** (`C:\Users\user\sentienthouse\`) = where OpenClaw agents actually execute
+- ALL runtime config lives on Windows: `.env`, `zo-api/token.json`, Google OAuth, Luma API keys
+- NEVER conclude a key/config is "missing" by only checking the Mac repo — always SSH to Windows to verify
+- HEARTBEAT.md edits on Mac need `git push` + `git pull` on Windows to take effect
 
 ### Power Settings
 
@@ -78,6 +86,24 @@ Windows Firewall should auto-allow Node.js. If not:
 
 ## OpenClaw Configuration
 
+### Authentication (v1 Schema)
+
+OpenClaw v2026.2.9 uses **v1 auth schema**. All 7 agents share the same Anthropic API key.
+
+Auth files at: `%USERPROFILE%\.openclaw\agents\<agent-id>\agent\auth-profiles.json`
+
+Correct v1 schema:
+```json
+{"version":1,"profiles":{"anthropic:default":{"type":"token","provider":"anthropic","token":"sk-ant-..."}}}
+```
+
+**Common error:** "No API key found" = wrong schema. Old/broken schemas used `"mode":"api-key"` and `"key":"sk-ant-..."`.
+
+To fix non-interactively:
+```powershell
+openclaw onboard --non-interactive --accept-risk --auth-choice token --token YOUR_KEY --token-provider anthropic --skip-channels --skip-skills --skip-daemon --skip-ui --skip-health
+```
+
 ### Workspace Paths
 
 In `openclaw.json`, all workspace paths must point to your local clone:
@@ -92,12 +118,22 @@ Use forward slashes even on Windows.
 
 ### Cron Jobs
 
-Cron jobs are stored in `~/.openclaw/cron/jobs.json`. The `config/cron-jobs.json` in this repo is a reference copy.
+**IMPORTANT:** Gateway reads crons from `~/.openclaw/cron/jobs.json`, NOT from the project's `config/cron-jobs.json`. The repo config is a reference copy only.
 
-To restore cron jobs from the repo:
-```powershell
-copy config\cron-jobs.json %USERPROFILE%\.openclaw\cron\jobs.json
-```
+Register new crons via CLI: `openclaw cron add`
+
+**Current active jobs (6 total):**
+
+| Job | Agent | Schedule |
+|-----|-------|----------|
+| BLRxZo Morning Audit | captain-blrxzo | 10:00 AM IST daily |
+| WTFxZo Morning Audit | captain-wtfxzo | 10:00 AM IST daily |
+| BLRxZo Agent-KOT Fudr Sync | captain-blrxzo | Every 1 hour |
+| WTFxZo Agent-KOT Fudr Sync | captain-wtfxzo | Every 1 hour |
+| BLRxZo PMS Update | captain-blrxzo | Every 1 hour |
+| WTFxZo PMS Update | captain-wtfxzo | Every 1 hour |
+
+**Removed crons (2026-02-12):** Daily Recap (both captains), Director Morning Briefing, Director Weekly Scorecard, Suki Event Sync, Suki Typeform Sync, Task Kanban Sync, and 8+ disabled legacy crons.
 
 ### Telegram Bot
 
@@ -128,6 +164,10 @@ openclaw cron list
 |-------|-----|
 | Port 3001 in use | `netstat -ano \| findstr :3001` then kill the PID |
 | Gateway won't start | Check `openclaw.json` exists in `~/.openclaw/` |
+| "No API key found" | Auth schema is wrong — re-run `openclaw onboard` with v1 schema (see Authentication section above) |
 | Telegram not responding | Verify bot token and allowFrom IDs |
 | Vercel can't reach API | Check Tailscale Funnel is running |
-| Cron jobs not firing | `openclaw cron list` to check status |
+| Cron jobs not firing | `openclaw cron list` — jobs must be in `~/.openclaw/cron/jobs.json`, not project config |
+| Config "missing" on Mac | Runtime config only lives on Windows — SSH to `user@100.80.28.70` to verify |
+| HEARTBEAT.md changes not working | Push from Mac, pull on Windows (`git push` + SSH + `git pull`) |
+| WTFxZo getting BLR data | Check Luma API key — `daily-recap` may use wrong key (`$LUMA_API_KEY_BLRXZO` instead of `$LUMA_API_KEY_SFOXZO`) |
