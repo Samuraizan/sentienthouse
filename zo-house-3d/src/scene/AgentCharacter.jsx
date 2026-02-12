@@ -212,6 +212,7 @@ function AgentCharacter({
   agentColor = "#8888ff",
   allAgentPositions = {},
   currentTask = null,
+  characterScale = 2.5,
 }) {
   const groupRef = useRef();
   const characterRef = useRef();
@@ -273,33 +274,40 @@ function AgentCharacter({
         child.material = child.material.clone();
         if (tintColor) {
           child.material.color.multiply(tintColor);
-          child.material.emissive = tintColor.clone().multiplyScalar(0.15);
-          child.material.emissiveIntensity = 0.5;
         }
+        // Force no glow — set emissive to black and intensity to 0
+        child.material.emissive = new THREE.Color(0, 0, 0);
+        child.material.emissiveIntensity = 0;
+        child.material.emissiveMap = null;
         child.material.needsUpdate = true;
       }
     });
   }, [clonedScene, tintColor]);
 
   useEffect(() => {
-    const isActive = status === "active" || status === "online";
     const isOffline = status === "offline";
     clonedScene.traverse((child) => {
       if (child.isSkinnedMesh || child.isMesh) {
         if (!child.material._originalColor) {
           child.material._originalColor = child.material.color?.clone() || new THREE.Color(1, 1, 1);
         }
-        if (isActive) {
-          child.material.emissive = tintColor ? tintColor.clone().multiplyScalar(0.3) : new THREE.Color(0.15, 0.15, 0.3);
-          child.material.emissiveIntensity = 0.8;
-        } else if (isOffline) {
+        if (isOffline) {
           const col = child.material._originalColor.clone();
           if (tintColor) col.multiply(tintColor);
           const gray = (col.r + col.g + col.b) / 3;
           col.lerp(new THREE.Color(gray, gray, gray), 0.7);
           col.multiplyScalar(0.5);
           child.material.color.copy(col);
+          child.material.emissive = new THREE.Color(0, 0, 0);
           child.material.emissiveIntensity = 0;
+          child.material.emissiveMap = null;
+        } else {
+          // Restore original colors, no glow
+          child.material.color.copy(child.material._originalColor);
+          if (tintColor) child.material.color.multiply(tintColor);
+          child.material.emissive = new THREE.Color(0, 0, 0);
+          child.material.emissiveIntensity = 0;
+          child.material.emissiveMap = null;
         }
         child.material.needsUpdate = true;
       }
@@ -928,7 +936,7 @@ function AgentCharacter({
       onPointerOut={() => setHovered(false)}
     >
       <group ref={characterRef}>
-        <primitive object={clonedScene} scale={[2.5, 2.5, 2.5]} position={[0, 0, 0]} />
+        <primitive object={clonedScene} scale={[characterScale, characterScale, characterScale]} position={[0, 0, 0]} />
 
         {/* Shadow */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>

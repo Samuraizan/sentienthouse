@@ -327,7 +327,9 @@ function KitchenCounter({ position, rotation = [0, 0, 0], color }) {
 
 // ═══════════════════════════════════════════════════════════════════
 // 3 WORKSPACE LAYOUTS
+// Decoration scale — items are 3x bigger; positions halved to fit island bounds
 // ═══════════════════════════════════════════════════════════════════
+const DECO_SCALE = 3;
 
 /**
  * HQWorkspace — Interdimensional HQ (center)
@@ -389,12 +391,12 @@ function HQWorkspace({ position, color }) {
  */
 function BLRxZoHouseWorkspace({ position, color }) {
   return (
-    <group position={position}>
+    <group position={position} scale={[DECO_SCALE, DECO_SCALE, DECO_SCALE]}>
       {/* BLRxZo JR reception desk */}
-      <Desk position={[0, 0, -8]} rotation={[0, 0, 0]} color={color} monitors={2} />
+      <Desk position={[0, 0, -4]} rotation={[0, 0, 0]} color={color} monitors={2} />
 
       {/* Guest check-in counter */}
-      <group position={[8, 0, 0]}>
+      <group position={[4, 0, 0]}>
         <mesh position={[0, 0.6, 0]} castShadow>
           <boxGeometry args={[2.5, 1.2, 1]} />
           <meshStandardMaterial color="#3a3a4a" />
@@ -406,28 +408,28 @@ function BLRxZoHouseWorkspace({ position, color }) {
       </group>
 
       {/* Common area — sofas facing each other */}
-      <Sofa position={[-6, 0, 6]} rotation={[0, Math.PI / 4, 0]} color={color} />
-      <Sofa position={[2, 0, 10]} rotation={[0, Math.PI + Math.PI / 4, 0]} color="#3a3a4a" />
-      <CoffeeTable position={[-2, 0, 8]} />
+      <Sofa position={[-3, 0, 3]} rotation={[0, Math.PI / 4, 0]} color={color} />
+      <Sofa position={[1, 0, 5]} rotation={[0, Math.PI + Math.PI / 4, 0]} color="#3a3a4a" />
+      <CoffeeTable position={[-1, 0, 4]} />
 
       {/* Kitchen counter */}
-      <KitchenCounter position={[-8, 0, -2]} rotation={[0, Math.PI / 2, 0]} color={color} />
+      <KitchenCounter position={[-4, 0, -1]} rotation={[0, Math.PI / 2, 0]} color={color} />
 
       {/* Ops board / status display */}
-      <Whiteboard position={[0, 2.5, -12]} rotation={[0, 0, 0]} color={color} />
+      <Whiteboard position={[0, 1.25, -6]} rotation={[0, 0, 0]} color={color} />
 
       {/* Plants — house feel */}
-      <Plant position={[-12, 0, -10]} scale={1.3} />
-      <Plant position={[12, 0, -10]} scale={1.1} />
-      <Plant position={[12, 0, 8]} scale={1} />
-      <Plant position={[-12, 0, 10]} scale={0.9} />
+      <Plant position={[-6, 0, -5]} scale={1.3} />
+      <Plant position={[6, 0, -5]} scale={1.1} />
+      <Plant position={[6, 0, 4]} scale={1} />
+      <Plant position={[-6, 0, 5]} scale={0.9} />
 
       {/* Welcome mat area */}
-      <Rug position={[0, 0, 12]} size={[5, 2]} color={color} />
+      <Rug position={[0, 0, 6]} size={[5, 2]} color={color} />
 
       {/* Floor lamps — warm */}
-      <FloorLamp position={[-10, 0, 5]} color={color} />
-      <FloorLamp position={[10, 0, 5]} color={color} />
+      <FloorLamp position={[-5, 0, 2.5]} color={color} />
+      <FloorLamp position={[5, 0, 2.5]} color={color} />
     </group>
   );
 }
@@ -438,12 +440,12 @@ function BLRxZoHouseWorkspace({ position, color }) {
  */
 function WTFxZoHouseWorkspace({ position, color }) {
   return (
-    <group position={position}>
+    <group position={position} scale={[DECO_SCALE, DECO_SCALE, DECO_SCALE]}>
       {/* WTFxZo JR reception desk */}
-      <Desk position={[0, 0, -8]} rotation={[0, 0, 0]} color={color} monitors={2} />
+      <Desk position={[0, 0, -4]} rotation={[0, 0, 0]} color={color} monitors={2} />
 
       {/* Guest check-in counter — mirrored to left */}
-      <group position={[-8, 0, 0]}>
+      <group position={[-4, 0, 0]}>
         <mesh position={[0, 0.6, 0]} castShadow>
           <boxGeometry args={[2.5, 1.2, 1]} />
           <meshStandardMaterial color="#3a3a4a" />
@@ -455,28 +457,28 @@ function WTFxZoHouseWorkspace({ position, color }) {
       </group>
 
       {/* Common area — sofas mirrored */}
-      <Sofa position={[6, 0, 6]} rotation={[0, -Math.PI / 4, 0]} color={color} />
-      <Sofa position={[-2, 0, 10]} rotation={[0, Math.PI - Math.PI / 4, 0]} color="#3a3a4a" />
-      <CoffeeTable position={[2, 0, 8]} />
+      <Sofa position={[3, 0, 3]} rotation={[0, -Math.PI / 4, 0]} color={color} />
+      <Sofa position={[-1, 0, 5]} rotation={[0, Math.PI - Math.PI / 4, 0]} color="#3a3a4a" />
+      <CoffeeTable position={[1, 0, 4]} />
 
       {/* Kitchen counter — mirrored to right */}
-      <KitchenCounter position={[8, 0, -2]} rotation={[0, -Math.PI / 2, 0]} color={color} />
+      <KitchenCounter position={[4, 0, -1]} rotation={[0, -Math.PI / 2, 0]} color={color} />
 
       {/* Ops board / status display */}
-      <Whiteboard position={[0, 2.5, -12]} rotation={[0, 0, 0]} color={color} />
+      <Whiteboard position={[0, 1.25, -6]} rotation={[0, 0, 0]} color={color} />
 
       {/* Plants — house feel */}
-      <Plant position={[12, 0, -10]} scale={1.3} />
-      <Plant position={[-12, 0, -10]} scale={1.1} />
-      <Plant position={[-12, 0, 8]} scale={1} />
-      <Plant position={[12, 0, 10]} scale={0.9} />
+      <Plant position={[6, 0, -5]} scale={1.3} />
+      <Plant position={[-6, 0, -5]} scale={1.1} />
+      <Plant position={[-6, 0, 4]} scale={1} />
+      <Plant position={[6, 0, 5]} scale={0.9} />
 
       {/* Welcome mat area */}
-      <Rug position={[0, 0, 12]} size={[5, 2]} color={color} />
+      <Rug position={[0, 0, 6]} size={[5, 2]} color={color} />
 
       {/* Floor lamps — warm */}
-      <FloorLamp position={[10, 0, 5]} color={color} />
-      <FloorLamp position={[-10, 0, 5]} color={color} />
+      <FloorLamp position={[5, 0, 2.5]} color={color} />
+      <FloorLamp position={[-5, 0, 2.5]} color={color} />
     </group>
   );
 }

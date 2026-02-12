@@ -101,7 +101,7 @@ function BigScreenText() {
 
     return (
         <Html
-            position={[1.5, 10.5, -7.5]}
+            position={[1, 24, -10]}
             center
             distanceFactor={12}
             occlude={false}
@@ -111,39 +111,39 @@ function BigScreenText() {
             zIndexRange={[50, 0]}
         >
             <div style={{
-                width: "240px",
+                width: "500px",
                 textAlign: "center",
                 fontFamily: "Inter, SF Pro Display, -apple-system, monospace",
             }}>
                 {connected ? (
                     <>
                         <div style={{
-                            fontSize: "22px",
+                            fontSize: "64px",
                             fontWeight: 800,
-                            color: "#00ff88",
-                            textShadow: "0 0 20px rgba(0,255,136,0.6), 0 0 40px rgba(0,255,136,0.3)",
-                            letterSpacing: "4px",
+                            color: "#ffffff",
+                            textShadow: "0 0 20px rgba(255,255,255,0.6), 0 0 40px rgba(255,255,255,0.3)",
+                            letterSpacing: "8px",
                             textTransform: "uppercase",
                         }}>
                             We Are Alive
                         </div>
                         <div style={{
-                            fontSize: "10px",
+                            fontSize: "18px",
                             fontWeight: 500,
-                            color: "rgba(0,255,136,0.5)",
-                            marginTop: "6px",
-                            letterSpacing: "2px",
+                            color: "rgba(255,255,255,0.5)",
+                            marginTop: "10px",
+                            letterSpacing: "4px",
                         }}>
                             {agentCount}/7 AGENTS ONLINE
                         </div>
                     </>
                 ) : (
                     <div style={{
-                        fontSize: "16px",
+                        fontSize: "48px",
                         fontWeight: 600,
                         color: "#ff4444",
-                        textShadow: "0 0 15px rgba(255,68,68,0.5)",
-                        letterSpacing: "3px",
+                        textShadow: "0 0 25px rgba(255,68,68,0.6)",
+                        letterSpacing: "4px",
                     }}>
                         DISCONNECTED
                     </div>

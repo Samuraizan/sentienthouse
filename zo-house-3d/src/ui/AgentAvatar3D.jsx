@@ -37,14 +37,14 @@ function CharacterModel({ modelPath, agentColor, autoRotate = true }) {
   const clonedScene = useMemo(() => skeletonClone(scene), [scene]);
   const { actions, mixer } = useAnimations(animations, groupRef);
 
-  // Apply color tint
+  // Apply color tint — no emissive glow
   useEffect(() => {
-    const color = new THREE.Color(agentColor);
     clonedScene.traverse((child) => {
       if (child.isSkinnedMesh || child.isMesh) {
         child.material = child.material.clone();
-        child.material.emissive = color.clone().multiplyScalar(0.2);
-        child.material.emissiveIntensity = 0.8;
+        child.material.emissive = new THREE.Color(0, 0, 0);
+        child.material.emissiveIntensity = 0;
+        child.material.emissiveMap = null;
         child.material.needsUpdate = true;
       }
     });
@@ -92,10 +92,8 @@ function FallbackAvatar({ agentColor, agentName = "" }) {
       {/* Head */}
       <mesh position={[0, 1.0, 0]}>
         <sphereGeometry args={[0.4, 16, 16]} />
-        <meshStandardMaterial 
-          color={agentColor} 
-          emissive={agentColor}
-          emissiveIntensity={0.5}
+        <meshStandardMaterial
+          color={agentColor}
           metalness={0.3}
           roughness={0.6}
         />
@@ -103,23 +101,19 @@ function FallbackAvatar({ agentColor, agentName = "" }) {
       {/* Body */}
       <mesh position={[0, 0.2, 0]}>
         <capsuleGeometry args={[0.3, 0.9, 8, 16]} />
-        <meshStandardMaterial 
-          color={agentColor} 
-          emissive={agentColor}
-          emissiveIntensity={0.4}
+        <meshStandardMaterial
+          color={agentColor}
           metalness={0.2}
           roughness={0.7}
         />
       </mesh>
-      {/* Glow ring at feet */}
+      {/* Ring at feet */}
       <mesh position={[0, -0.3, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <torusGeometry args={[0.8, 0.04, 8, 32]} />
-        <meshStandardMaterial 
-          color={agentColor} 
-          emissive={agentColor}
-          emissiveIntensity={1.2}
+        <meshStandardMaterial
+          color={agentColor}
           transparent
-          opacity={0.7}
+          opacity={0.5}
         />
       </mesh>
     </group>
