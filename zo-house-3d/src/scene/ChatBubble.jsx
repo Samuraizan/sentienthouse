@@ -8,9 +8,9 @@ import { Html } from "@react-three/drei";
  * stronger background, thicker border accent.
  */
 
-const BUBBLE_Y_OFFSET = 5;
-const AUTO_HIDE_MS = 12000;
-const MAX_CHARS = 80;
+const BUBBLE_Y_OFFSET = 20; // Higher above scaled-up pirate characters
+const AUTO_HIDE_MS = 15000;
+const MAX_CHARS = 120;
 
 function ChatBubble({
   position = [0, 0, 0],
@@ -62,7 +62,7 @@ function ChatBubble({
     <group position={bubblePosition}>
       <Html
         center
-        distanceFactor={14}
+        distanceFactor={30}
         occlude={false}
         style={{
           pointerEvents: "none",
@@ -74,20 +74,20 @@ function ChatBubble({
           className={`chat-bubble ${fading ? "chat-bubble--fade-out" : "chat-bubble--fade-in"}`}
           style={{
             "--agent-color": agentColor,
-            background: "rgba(10, 10, 30, 0.92)",
-            borderLeft: `3px solid ${agentColor}`,
-            borderRadius: "10px",
-            padding: "8px 14px",
-            maxWidth: "220px",
-            boxShadow: `0 4px 16px rgba(0,0,0,0.5), 0 0 8px ${agentColor}33`,
+            background: "rgba(10, 10, 30, 0.95)",
+            borderLeft: `4px solid ${agentColor}`,
+            borderRadius: "14px",
+            padding: "12px 20px",
+            maxWidth: "360px",
+            boxShadow: `0 6px 24px rgba(0,0,0,0.6), 0 0 12px ${agentColor}44`,
           }}
         >
           <div style={{
             color: agentColor,
-            fontSize: "12px",
+            fontSize: "20px",
             fontWeight: 700,
             fontFamily: "Inter, SF Pro Display, -apple-system, sans-serif",
-            marginBottom: "4px",
+            marginBottom: "6px",
             textTransform: "uppercase",
             letterSpacing: "0.5px",
           }}>
@@ -95,7 +95,7 @@ function ChatBubble({
           </div>
           <div style={{
             color: "#e8e8f0",
-            fontSize: "13px",
+            fontSize: "22px",
             fontWeight: 500,
             fontFamily: "Inter, SF Pro Display, -apple-system, sans-serif",
             lineHeight: "1.4",
@@ -104,14 +104,14 @@ function ChatBubble({
           </div>
           <div style={{
             position: "absolute",
-            bottom: "-8px",
+            bottom: "-10px",
             left: "50%",
             transform: "translateX(-50%)",
             width: 0,
             height: 0,
-            borderLeft: "8px solid transparent",
-            borderRight: "8px solid transparent",
-            borderTop: "8px solid rgba(10, 10, 30, 0.92)",
+            borderLeft: "10px solid transparent",
+            borderRight: "10px solid transparent",
+            borderTop: "10px solid rgba(10, 10, 30, 0.95)",
           }} />
         </div>
       </Html>

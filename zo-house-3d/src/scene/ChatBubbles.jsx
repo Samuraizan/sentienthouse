@@ -19,6 +19,7 @@ function getAgentMessage(agent, cronJobs) {
   const agentCrons = cronJobs.filter((j) => j.agent === agent.id);
   const now = Date.now();
 
+  // Show bubble ONLY for agents with real work — cron job running or active task
   for (const job of agentCrons) {
     if (job.lastRun) {
       const lastRunMs = new Date(job.lastRun).getTime();
@@ -32,20 +33,13 @@ function getAgentMessage(agent, cronJobs) {
     return agent.currentTask;
   }
 
-  switch (agent.status) {
-    case "active":
-      return "Processing request...";
-    case "idle":
-      return "Idle - awaiting tasks";
-    case "online":
-      return "Online - standing by";
-    case "standby":
-      return "Standby mode";
-    case "dormant":
-      return "Dormant - last active a while ago";
-    default:
-      return null;
+  // Only show bubble for active agents (actually processing something)
+  if (agent.status === "active") {
+    return "Processing request...";
   }
+
+  // No bubble for standby/idle/dormant/online — agent labels already show status
+  return null;
 }
 
 export default function ChatBubbles() {
@@ -66,12 +60,7 @@ export default function ChatBubbles() {
           agent.lastActive &&
           now - new Date(agent.lastActive).getTime() < RECENT_THRESHOLD_MS;
 
-        const isActive = [
-          "active",
-          "idle",
-          "online",
-          "standby",
-        ].includes(agent.status);
+        const isActive = agent.status === "active";
 
         if (!isRecent && !isActive) return null;
 
