@@ -40,8 +40,8 @@ function SceneContent() {
       {/* Kept for logical positioning/debugging, but visuals might overlap */}
       <Zones />
 
-      {/* Themed decorations disabled — GLTF model has baked equipment */}
-      {/* <ZoneDecorations /> */}
+      {/* Furniture/props for satellite islands (HQ has baked GLTF equipment) */}
+      <ZoneDecorations />
 
       {/* 7 Animated Character Models — distributed across 3 zones */}
       <AgentCharacters />

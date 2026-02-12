@@ -482,6 +482,61 @@ function WTFxZoHouseWorkspace({ position, color }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// ZONE SIGN — Floating signpost with zone name
+// ═══════════════════════════════════════════════════════════════════
+
+function ZoneSign({ position, text, color }) {
+  const signRef = useRef();
+
+  useFrame((state) => {
+    if (signRef.current) {
+      // Gentle hover bob
+      signRef.current.position.y = position[1] + 5.5 + Math.sin(state.clock.getElapsedTime() * 0.8) * 0.15;
+    }
+  });
+
+  const textColor = new THREE.Color(color);
+
+  return (
+    <group ref={signRef} position={[position[0], position[1] + 5.5, position[2] - 14]}>
+      {/* Post */}
+      <mesh position={[0, -2.5, 0]} castShadow>
+        <cylinderGeometry args={[0.08, 0.1, 5, 8]} />
+        <meshStandardMaterial color="#4a3a2a" roughness={0.9} />
+      </mesh>
+      {/* Sign board */}
+      <mesh castShadow>
+        <boxGeometry args={[text.length * 0.65 + 1.5, 1.6, 0.15]} />
+        <meshStandardMaterial color="#1a1a2e" roughness={0.7} metalness={0.2} />
+      </mesh>
+      {/* Inner glow panel */}
+      <mesh position={[0, 0, 0.08]}>
+        <planeGeometry args={[text.length * 0.65 + 0.8, 1.1]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.6}
+          transparent
+          opacity={0.15}
+        />
+      </mesh>
+      {/* Accent line top */}
+      <mesh position={[0, 0.75, 0.08]}>
+        <boxGeometry args={[text.length * 0.65 + 1.2, 0.04, 0.02]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.5} />
+      </mesh>
+      {/* Accent line bottom */}
+      <mesh position={[0, -0.75, 0.08]}>
+        <boxGeometry args={[text.length * 0.65 + 1.2, 0.04, 0.02]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.5} />
+      </mesh>
+      {/* Glow light */}
+      <pointLight position={[0, 0, 1]} color={color} intensity={1.5} distance={8} decay={2} />
+    </group>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // MAIN EXPORT
 // ═══════════════════════════════════════════════════════════════════
 
@@ -490,9 +545,16 @@ export default function ZoneDecorations() {
 
   return (
     <group>
-      <HQWorkspace position={zones.hq.position} color={zones.hq.color} />
+      {/* HQ: GLTF model has baked equipment — only add sign */}
+      <ZoneSign position={zones.hq.position} text="Interdimensional HQ" color={zones.hq.color} />
+
+      {/* BLRxZo House: full furniture + sign */}
       <BLRxZoHouseWorkspace position={zones["blrxzo-house"].position} color={zones["blrxzo-house"].color} />
+      <ZoneSign position={zones["blrxzo-house"].position} text="BLRxZo House" color={zones["blrxzo-house"].color} />
+
+      {/* WTFxZo House: full furniture + sign */}
       <WTFxZoHouseWorkspace position={zones["wtfxzo-house"].position} color={zones["wtfxzo-house"].color} />
+      <ZoneSign position={zones["wtfxzo-house"].position} text="WTFxZo House" color={zones["wtfxzo-house"].color} />
     </group>
   );
 }
