@@ -107,13 +107,16 @@ async function pollIndividual() {
 
 /**
  * Determine the currentTask for an agent based on recently-running cron jobs.
- * If a cron job for this agent ran in the last 2 minutes, consider it the current task.
+ *
+ * Uses a 20-minute recency window so agents appear "working" for a meaningful
+ * portion of their cron cycle (jobs typically run every 30–60 min).  This keeps
+ * the 3D dashboard lively rather than flashing active for only 2 minutes.
  */
 function findCurrentTask(agentId, cronJobs) {
   if (!cronJobs || cronJobs.length === 0) return null;
 
   const now = Date.now();
-  const TWO_MINUTES = 2 * 60 * 1000;
+  const RECENCY_WINDOW = 20 * 60 * 1000; // 20 minutes
 
   // Check cron jobs that belong to this agent and ran recently
   for (const job of cronJobs) {
@@ -121,21 +124,19 @@ function findCurrentTask(agentId, cronJobs) {
     if (jobAgentId !== agentId) continue;
     if (!job.enabled) continue;
 
-    // If the job has a lastRunAtMs and it ran within the last 2 minutes
-    // plus its duration, it might still be running
+    // If the job ran within the recency window or is still running
     const lastRun = job.state?.lastRunAtMs;
     const duration = job.state?.lastDurationMs || 60000;
     if (lastRun) {
       const endedAt = lastRun + duration;
-      // If job started within 2 min or is still running
-      if (now - lastRun < TWO_MINUTES || endedAt > now) {
+      if (now - lastRun < RECENCY_WINDOW || endedAt > now) {
         return job.name;
       }
     }
 
-    // If nextRunAtMs is very close (within 30s past), it might be starting now
+    // If nextRunAtMs just passed (within 2 min), the job is likely starting
     const nextRun = job.state?.nextRunAtMs;
-    if (nextRun && now >= nextRun && now - nextRun < TWO_MINUTES) {
+    if (nextRun && now >= nextRun && now - nextRun < 2 * 60 * 1000) {
       return job.name;
     }
   }
@@ -224,18 +225,20 @@ function processGatewayData(data) {
     }
 
     // Determine status based on session recency
+    // Widened thresholds: agents with hourly cron jobs should show as
+    // "active" for a meaningful window, not just a 2-minute flash.
     let status = "offline";
     const now = Date.now();
     if (sessions.length > 0) {
       const newestMs = sessions.reduce((max, s) => Math.max(max, s.updatedAt || 0), 0);
       const ageMs = now - newestMs;
 
-      if (ageMs < 2 * 60 * 1000) {
-        status = "active";      // Active in last 2 minutes
-      } else if (ageMs < 10 * 60 * 1000) {
-        status = "idle";        // Active in last 10 minutes
-      } else if (ageMs < 60 * 60 * 1000) {
-        status = "online";      // Active in last hour
+      if (ageMs < 20 * 60 * 1000) {
+        status = "active";      // Active in last 20 minutes
+      } else if (ageMs < 45 * 60 * 1000) {
+        status = "idle";        // Active in last 45 minutes
+      } else if (ageMs < 2 * 60 * 60 * 1000) {
+        status = "online";      // Active in last 2 hours
       } else {
         status = "dormant";     // Has sessions but old
       }

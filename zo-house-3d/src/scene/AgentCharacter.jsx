@@ -179,6 +179,14 @@ const TASK_TO_INTERACTION = {
   "whitefield-guest-welcome": { zone: "wtfxzo-house", id: "welcome" },
   "whitefield-staff-report": { zone: "wtfxzo-house", id: "ops-board" },
 
+  // ── Generic / shared tasks (zone resolved from agent's homeZone) ──
+  "agent-kot": { zone: null, id: "ops-board" },  // Keep-on-Track audit — runs for both houses
+  "pms-update": { zone: null, id: "desk" },       // PMS property update — runs for both houses
+  "running-opex": { zone: null, id: "desk" },
+  "co-working-entry": { zone: null, id: "checkin" },
+  "activity-revenue": { zone: null, id: "desk" },
+  "task-entry": { zone: null, id: "desk" },
+
   // ── Generic / Utility ──
   "google-workspace": { zone: "hq", id: "desk" }, // Fallback to desk
   "google-search": { zone: "hq", id: "desk" },
@@ -601,17 +609,20 @@ function AgentCharacter({
       const mapping = taskKey ? TASK_TO_INTERACTION[taskKey] : null;
 
       if (mapping) {
+        // zone: null means "use agent's home zone" (generic tasks like agent-kot, pms-update)
+        const resolvedZone = mapping.zone || agentHomeZone;
+
         // If task is in a different zone, teleport there first (no mid-air walking)
-        if (mapping.zone !== currentZoneKeyRef.current) {
-          const tz = ZONE_POSITIONS[mapping.zone]?.position;
+        if (resolvedZone !== currentZoneKeyRef.current) {
+          const tz = ZONE_POSITIONS[resolvedZone]?.position;
           if (tz) {
             s.currentPos.set(tz[0], position[1], tz[2]);
             s.homePos.set(tz[0], position[1], tz[2]);
-            currentZoneKeyRef.current = mapping.zone;
+            currentZoneKeyRef.current = resolvedZone;
           }
         }
 
-        const targetInteractions = ZONE_INTERACTIONS[mapping.zone];
+        const targetInteractions = ZONE_INTERACTIONS[resolvedZone];
         const interaction = targetInteractions?.find((i) => i.id === mapping.id);
         if (interaction) {
           goToInteraction(interaction);
