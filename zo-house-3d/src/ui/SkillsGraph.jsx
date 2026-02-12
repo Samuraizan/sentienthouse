@@ -13,6 +13,7 @@ import AgentAvatar3D from "./AgentAvatar3D.jsx";
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 const CATEGORY_COLORS = {
+  "data-entry": "#00E5FF",
   finance: "#FFD700",
   events: "#FF69B4",
   integration: "#00CED1",
@@ -30,6 +31,7 @@ const CATEGORY_COLORS = {
 };
 
 const CATEGORY_ICONS = {
+  "data-entry": "📊",
   finance: "💰",
   events: "🎉",
   integration: "🔗",

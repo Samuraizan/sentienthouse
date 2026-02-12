@@ -37,7 +37,7 @@ const STATUS_LABELS = {
 const ROLE_LABELS = {
   director: "Strategic Orchestrator",
   "captain-blrxzo": "House Captain — Bangalore",
-  "captain-wtfxzo": "House Captain — Goa",
+  "captain-wtfxzo": "House Captain — Whitefield",
   events: "Events Manager",
   "vibe-curator": "Vibe Curator",
   sales: "Sales Lead",

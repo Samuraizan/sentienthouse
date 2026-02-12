@@ -80,29 +80,36 @@ const ROLE_LABELS = {
 };
 
 const SKILL_DESCRIPTIONS = {
+  // ZomadPrime
   "delegate-task": "Delegate tasks to sub-agents with context",
   "morning-briefing": "Generate daily morning briefing for the team",
   "weekly-scorecard": "Compile weekly performance scorecard",
-  "morning-audit": "Run morning property checklist and audit",
-  "guest-flow": "Manage guest check-in/out flow",
-  "financial-entry": "Log financial entries and receipts",
-  "staff-report": "Generate staff attendance and task report",
-  "maintenance-triage": "Triage and prioritize maintenance requests",
-  "daily-recap": "End-of-day property summary and recap",
+  // Captain agents — data entry
+  "running-opex": "Log expense entries from receipts and invoices",
+  "co-working-entry": "Register co-working guests and payments",
+  "activity-revenue": "Log activity bookings (pickle ball, workshops, etc.)",
+  "task-entry": "Manage Laundry List tasks (add, update, mark done)",
+  "agent-kot": "Auto-parse Fudr cafe orders from Gmail",
+  // Captain agents — reporting
+  "morning-audit": "10AM daily task audit from Laundry List",
+  // Suki (Events)
   "invoice-maker": "Generate invoices for events and services",
   "event-inquiry": "Handle incoming event inquiries",
   "luma-sync": "Sync events with Luma calendar",
   "event-marketing": "Create event marketing materials",
   "event-recap": "Generate post-event recap and metrics",
   "rev-tracking": "Track revenue and financial metrics",
+  // LOKI (Vibe)
   "guest-welcome": "Create personalized guest welcome messages",
   "daily-vibe": "Curate daily vibe and atmosphere report",
   "city-event": "Scout and share local city events",
   "community-pulse": "Gauge community mood and engagement",
+  // Wanda (Sales)
   "lead-qualify": "Qualify incoming sales leads",
   "outreach-sequence": "Run automated outreach sequences",
   "pipeline-update": "Update sales pipeline and CRM",
   "founder-marketing": "Create founder-focused marketing content",
+  // Yana (BD)
   "partner-research": "Research potential business partners",
   "founder-outreach": "Outreach to founders and entrepreneurs",
   "deal-pipeline": "Manage business development deal pipeline",

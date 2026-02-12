@@ -102,12 +102,12 @@ function parseSkillFile(filePath) {
     const content = fs.readFileSync(filePath, "utf8");
     const lines = content.split("\n");
     
-    // Parse YAML frontmatter
+    // Parse YAML frontmatter OR markdown header format
     let name = "";
     let description = "";
     let inFrontmatter = false;
     let frontmatterEnd = 0;
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       if (line === "---" && i === 0) {
@@ -127,7 +127,17 @@ function parseSkillFile(filePath) {
         }
       }
     }
-    
+
+    // Fallback: parse from markdown headers if no frontmatter found
+    if (!name) {
+      const headerMatch = content.match(/^#\s+Skill:\s*(.+)/m);
+      if (headerMatch) name = headerMatch[1].trim();
+    }
+    if (!description) {
+      const purposeMatch = content.match(/##\s+Purpose\n(.+)/);
+      if (purposeMatch) description = purposeMatch[1].trim();
+    }
+
     // Get the body content (after frontmatter)
     const bodyLines = lines.slice(frontmatterEnd + 1);
     const body = bodyLines.join("\n").trim();
@@ -146,11 +156,12 @@ function parseSkillFile(filePath) {
     // Determine category from description or name
     let category = "operations";
     const desc = (description + " " + name).toLowerCase();
-    if (desc.includes("google") || desc.includes("sync") || desc.includes("api")) category = "integration";
-    else if (desc.includes("invoice") || desc.includes("revenue") || desc.includes("financial")) category = "finance";
+    if (desc.includes("data entry") || desc.includes("expense") || desc.includes("opex") || desc.includes("co-working") || desc.includes("kot") || desc.includes("cafe order")) category = "data-entry";
+    else if (desc.includes("google") || desc.includes("sync") || desc.includes("api")) category = "integration";
+    else if (desc.includes("invoice") || desc.includes("revenue") || desc.includes("financial") || desc.includes("activity revenue")) category = "finance";
     else if (desc.includes("event") || desc.includes("luma")) category = "events";
     else if (desc.includes("marketing") || desc.includes("social")) category = "marketing";
-    else if (desc.includes("report") || desc.includes("briefing") || desc.includes("recap") || desc.includes("scorecard")) category = "reporting";
+    else if (desc.includes("report") || desc.includes("briefing") || desc.includes("recap") || desc.includes("scorecard") || desc.includes("audit")) category = "reporting";
     else if (desc.includes("guest") || desc.includes("welcome") || desc.includes("check")) category = "hospitality";
     else if (desc.includes("staff") || desc.includes("hr")) category = "hr";
     else if (desc.includes("vibe") || desc.includes("playlist") || desc.includes("creative")) category = "creative";
@@ -159,7 +170,7 @@ function parseSkillFile(filePath) {
     else if (desc.includes("research") || desc.includes("partner")) category = "research";
     else if (desc.includes("deal") || desc.includes("bd") || desc.includes("business dev")) category = "bd";
     else if (desc.includes("delegate") || desc.includes("task") || desc.includes("manage")) category = "management";
-    else if (desc.includes("maintenance") || desc.includes("audit") || desc.includes("operation")) category = "operations";
+    else if (desc.includes("maintenance") || desc.includes("operation")) category = "operations";
     
     return {
       name: name || path.basename(path.dirname(filePath)),
