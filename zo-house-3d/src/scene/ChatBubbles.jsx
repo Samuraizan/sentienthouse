@@ -2,11 +2,12 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import useAgentStore from "../store/agentStore";
 import ChatBubble from "./ChatBubble";
 import { ZONE_POSITIONS, ZONE_HOME_OFFSETS } from "./Zones";
+import { getAgentWorldPosition } from "./positionRegistry";
 
 /**
  * ChatBubbles.jsx - Container that manages all 3D chat bubbles above agent characters.
  *
- * Uses homeZone + ZONE_HOME_OFFSETS for position lookups.
+ * Uses live position registry, falls back to homeZone + offset.
  * Bubbles are more prominent — larger, longer visible, higher contrast.
  */
 
@@ -77,12 +78,16 @@ export default function ChatBubbles() {
         const message = getAgentMessage(agent, cronJobs);
         if (!message) return null;
 
+        // Live position from registry (tracks walking agents), fallback to static
+        const livePos = getAgentWorldPosition(agent.id);
         const offset = ZONE_HOME_OFFSETS[agent.id] || [0, 0, 0];
-        const position = [
-          zone.position[0] + offset[0],
-          zone.position[1] + PLATFORM_Y_OFFSET,
-          zone.position[2] + offset[2],
-        ];
+        const position = livePos
+          ? [livePos[0], livePos[1], livePos[2]]
+          : [
+              zone.position[0] + offset[0],
+              zone.position[1] + PLATFORM_Y_OFFSET,
+              zone.position[2] + offset[2],
+            ];
 
         return {
           agentId: agent.id,

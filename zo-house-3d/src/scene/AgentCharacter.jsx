@@ -5,6 +5,7 @@ import { useGLTF, useAnimations, Html } from "@react-three/drei";
 import * as THREE from "three";
 import useAgentStore from "../store/agentStore";
 import { ZONE_POSITIONS } from "./Zones";
+import { updateAgentPosition, getAllPositions, getAgentWorldPosition } from "./positionRegistry";
 
 /**
  * AgentCharacter.jsx — Sentient AI agent with zone-aware workspace interactions
@@ -91,9 +92,44 @@ const WALK_SPEED = 2.5;
 const RUN_SPEED = 6.0;
 const CROSSFADE_DURATION = 0.25;
 
+// ── Collision avoidance (Reynolds separation) ────────────────────
+const SEPARATION_RADIUS = 3.0;   // start steering away
+const SEPARATION_STRENGTH = 4.0; // force multiplier
+const MIN_SEPARATION = 1.5;      // hard minimum distance
+const IDLE_DRIFT_SPEED = 0.5;    // drift speed for stationary agents
+
 // LOKI nomad timing
 const NOMAD_MIN_MS = 60000;
 const NOMAD_MAX_MS = 120000;
+
+// ── Task-to-interaction mapping (gateway cron → zone desk) ───────
+const TASK_TO_INTERACTION = {
+  "morning-briefing":     { zone: "hq", id: "command-desk" },
+  "agent-kot":            { zone: "hq", id: "conference" },
+  "event-marketing":      { zone: "hq", id: "whiteboard" },
+  "lead-qualify":         { zone: "hq", id: "wanda-desk" },
+  "sales-pipeline":       { zone: "hq", id: "wanda-desk" },
+  "bd-research":          { zone: "hq", id: "yana-desk" },
+  "partner-outreach":     { zone: "hq", id: "yana-desk" },
+  "strategy-review":      { zone: "hq", id: "command-desk" },
+  "analytics-digest":     { zone: "hq", id: "display-wall" },
+  "content-calendar":     { zone: "hq", id: "whiteboard" },
+  "social-post":          { zone: "hq", id: "whiteboard" },
+  "community-engagement": { zone: "hq", id: "lounge" },
+  "vibe-check":           { zone: "hq", id: "lounge" },
+  "event-coordination":   { zone: "hq", id: "suki-desk" },
+  "ticket-sales":         { zone: "hq", id: "suki-desk" },
+  "guest-checkin-blr":    { zone: "blrxzo-house", id: "checkin" },
+  "property-ops-blr":     { zone: "blrxzo-house", id: "ops-board" },
+  "blr-maintenance":      { zone: "blrxzo-house", id: "desk" },
+  "blr-guest-welcome":    { zone: "blrxzo-house", id: "welcome" },
+  "guest-checkin-goa":    { zone: "wtfxzo-house", id: "checkin" },
+  "property-ops-goa":     { zone: "wtfxzo-house", id: "ops-board" },
+  "goa-maintenance":      { zone: "wtfxzo-house", id: "desk" },
+  "goa-guest-welcome":    { zone: "wtfxzo-house", id: "welcome" },
+  "weekly-report":        { zone: "hq", id: "display-wall" },
+  "daily-standup":        { zone: "hq", id: "conference" },
+};
 
 // ── Main Component ─────────────────────────────────────────────────
 
@@ -301,8 +337,23 @@ function AgentCharacter({
   const goToInteraction = useCallback((interaction) => {
     const s = stateRef.current;
     const zc = zoneCenter;
-    const targetX = zc[0] + interaction.offset[0];
-    const targetZ = zc[2] + interaction.offset[2];
+    let targetX = zc[0] + interaction.offset[0];
+    let targetZ = zc[2] + interaction.offset[2];
+
+    // Anti-crowding: if agents already near target, offset around it
+    const others = getAllPositions();
+    let crowdCount = 0;
+    for (const otherId in others) {
+      if (otherId === agentId) continue;
+      const o = others[otherId];
+      const d = Math.sqrt((targetX - o.x) ** 2 + (targetZ - o.z) ** 2);
+      if (d < SEPARATION_RADIUS) crowdCount++;
+    }
+    if (crowdCount > 0) {
+      const angle = (crowdCount * 1.2) + Math.random() * 0.5;
+      targetX += Math.cos(angle) * 2.0;
+      targetZ += Math.sin(angle) * 2.0;
+    }
 
     s.targetPos.set(targetX, position[1], targetZ);
     s.mode = "goingToInteraction";
@@ -318,7 +369,7 @@ function AgentCharacter({
     s.targetRotation = Math.atan2(dx, dz);
 
     startWalk();
-  }, [zoneCenter, position, startWalk]);
+  }, [zoneCenter, position, startWalk, agentId]);
 
   // ── Behavior: Start interacting with object ──────────────────────
   const startInteracting = useCallback(() => {
@@ -371,15 +422,20 @@ function AgentCharacter({
 
   // ── Behavior: Visit another agent (cross-zone or same-zone) ──────
   const visitAgent = useCallback((targetAgentId) => {
-    const targetInfo = allAgentPositions[targetAgentId];
-    if (!targetInfo) return;
+    // Use live position from registry, fall back to static allAgentPositions
+    const livePos = getAgentWorldPosition(targetAgentId);
+    const staticInfo = allAgentPositions[targetAgentId];
+    if (!livePos && !staticInfo) return;
 
     const s = stateRef.current;
-    const [tx, ty, tz] = targetInfo.position;
+    const tx = livePos ? livePos[0] : staticInfo.position[0];
+    const ty = livePos ? livePos[1] : staticInfo.position[1];
+    const tz = livePos ? livePos[2] : staticInfo.position[2];
 
     // Determine visit reason based on zone pair
     const fromZone = currentZoneKeyRef.current;
-    const toZone = targetInfo.zoneKey;
+    const allPos = getAllPositions();
+    const toZone = allPos[targetAgentId]?.zoneKey || staticInfo?.zoneKey || fromZone;
     const routeKey = `${fromZone}->${toZone}`;
     const reasons = VISIT_REASONS[routeKey] || ["Quick sync", "Collaboration", "Update"];
     const reason = reasons[Math.floor(Math.random() * reasons.length)];
@@ -516,24 +572,70 @@ function AgentCharacter({
     const activity = STATUS_ACTIVITY[status] || 0.3;
     const s = stateRef.current;
 
+    // 1. Offline → return home, idle
     if (status === "offline") {
-      startIdle();
-      setActivityText("Offline");
+      s.targetPos.copy(s.homePos);
+      s.mode = "returning";
+      s.isMoving = true;
+      setCurrentMode("returning");
+      setActivityText("Going offline");
       setActivityEmoji("💤");
-      s.mode = "idle";
-      setCurrentMode("idle");
-      s.activityEndTime = Date.now() + 10000;
+      startWalk();
       return;
     }
 
-    // Get interactions for current zone (may differ from home for LOKI)
-    const currentInteractions = ZONE_INTERACTIONS[currentZoneKeyRef.current] || ZONE_INTERACTIONS.hq;
+    // 2. If gateway has a current task → go to the mapped interaction point
+    if (currentTask) {
+      const taskKey = Object.keys(TASK_TO_INTERACTION).find((k) =>
+        currentTask.toLowerCase().includes(k.replace(/-/g, " ")) ||
+        currentTask.toLowerCase().includes(k)
+      );
+      const mapping = taskKey ? TASK_TO_INTERACTION[taskKey] : null;
 
+      if (mapping) {
+        const targetInteractions = ZONE_INTERACTIONS[mapping.zone];
+        const interaction = targetInteractions?.find((i) => i.id === mapping.id);
+        if (interaction) {
+          // Override activity text with task name
+          goToInteraction(interaction);
+          setActivityText(`Running: ${currentTask}`);
+          return;
+        }
+      }
+      // No mapping found — still show the task, go to a desk
+      const currentInteractions = ZONE_INTERACTIONS[currentZoneKeyRef.current] || ZONE_INTERACTIONS.hq;
+      const deskInteraction = currentInteractions.find((i) => i.id.includes("desk")) || currentInteractions[0];
+      if (deskInteraction) {
+        goToInteraction(deskInteraction);
+        setActivityText(`Running: ${currentTask}`);
+        return;
+      }
+    }
+
+    // 3. No task → existing random roll but prefer unoccupied interaction points
+    const currentInteractions = ZONE_INTERACTIONS[currentZoneKeyRef.current] || ZONE_INTERACTIONS.hq;
     const roll = Math.random();
 
     if (roll < 0.55 * activity && currentInteractions.length > 0) {
-      const interaction = currentInteractions[Math.floor(Math.random() * currentInteractions.length)];
-      goToInteraction(interaction);
+      // Anti-crowding: score each interaction point by how many agents are nearby
+      const others = getAllPositions();
+      const scored = currentInteractions.map((interaction) => {
+        const zc = zoneCenter;
+        const ix = zc[0] + interaction.offset[0];
+        const iz = zc[2] + interaction.offset[2];
+        let crowding = 0;
+        for (const otherId in others) {
+          if (otherId === agentId) continue;
+          const o = others[otherId];
+          const d = Math.sqrt((ix - o.x) ** 2 + (iz - o.z) ** 2);
+          if (d < SEPARATION_RADIUS * 2) crowding++;
+        }
+        return { interaction, crowding };
+      });
+      // Sort by least crowded, pick from top 3
+      scored.sort((a, b) => a.crowding - b.crowding);
+      const pick = scored[Math.floor(Math.random() * Math.min(3, scored.length))];
+      goToInteraction(pick.interaction);
     } else if (roll < 0.75 * activity) {
       startWandering();
     } else if (roll < 0.85 * activity) {
@@ -552,13 +654,48 @@ function AgentCharacter({
       setActivityEmoji("");
       startIdle();
     }
-  }, [status, goToInteraction, startWandering, startIdle]);
+  }, [status, currentTask, goToInteraction, startWandering, startIdle, startWalk, zoneCenter, agentId]);
 
   // ── Initialize ───────────────────────────────────────────────────
   useEffect(() => {
     if (!actions || Object.keys(actions).length === 0) return;
     pickNextActivity();
   }, [actions]); // eslint-disable-line
+
+  // ── 3C: Status-reactive — respond to gateway status changes ─────
+  const prevStatusRef = useRef(status);
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = status;
+    if (!actions || Object.keys(actions).length === 0) return;
+
+    if (status === "offline" && prev !== "offline") {
+      // Immediately return home
+      returnHome();
+    } else if (
+      (status === "active" || status === "online") &&
+      (prev === "dormant" || prev === "standby" || prev === "offline")
+    ) {
+      // Woke up — force next activity, tighten visit timer
+      stateRef.current.nextVisitTime = Date.now() + 8000;
+      pickNextActivity();
+    }
+  }, [status]); // eslint-disable-line
+
+  // ── 3D: Task interruption — react to new currentTask ────────────
+  const prevTaskRef = useRef(currentTask);
+  useEffect(() => {
+    const prev = prevTaskRef.current;
+    prevTaskRef.current = currentTask;
+    if (!actions || Object.keys(actions).length === 0) return;
+    if (currentTask && currentTask !== prev) {
+      const s = stateRef.current;
+      // If idle/wandering/thinking, force immediate activity pick
+      if (s.mode === "idle" || s.mode === "wandering" || s.mode === "thinking") {
+        pickNextActivity();
+      }
+    }
+  }, [currentTask]); // eslint-disable-line
 
   // ── Selection wave ───────────────────────────────────────────────
   useEffect(() => {
@@ -621,21 +758,55 @@ function AgentCharacter({
           }
         }
 
-        // Check for visit opportunity
+        // Soft drift: nudge stationary agents apart if overlapping
+        if (s.mode !== "celebrating") {
+          const others = getAllPositions();
+          let driftX = 0, driftZ = 0;
+          for (const otherId in others) {
+            if (otherId === agentId) continue;
+            const o = others[otherId];
+            const ox = s.currentPos.x - o.x;
+            const oz = s.currentPos.z - o.z;
+            const oDist = Math.sqrt(ox * ox + oz * oz);
+            if (oDist < MIN_SEPARATION && oDist > 0.01) {
+              driftX += (ox / oDist);
+              driftZ += (oz / oDist);
+            }
+          }
+          if (Math.abs(driftX) > 0.01 || Math.abs(driftZ) > 0.01) {
+            const dLen = Math.sqrt(driftX * driftX + driftZ * driftZ);
+            s.currentPos.x += (driftX / dLen) * IDLE_DRIFT_SPEED * delta;
+            s.currentPos.z += (driftZ / dLen) * IDLE_DRIFT_SPEED * delta;
+          }
+        }
+
+        // Check for visit opportunity — proximity-aware using live registry
         if (now > s.nextVisitTime && s.mode !== "celebrating") {
           const myZone = currentZoneKeyRef.current;
-          const otherAgents = Object.keys(allAgentPositions).filter(id => id !== agentId);
+          const livePositions = getAllPositions();
+          const otherAgents = Object.keys(livePositions).filter(id => id !== agentId);
 
           if (otherAgents.length > 0 && Math.random() < activity * 0.5) {
-            // 70% same-zone, 30% cross-zone
-            const sameZoneAgents = otherAgents.filter(id => allAgentPositions[id].zoneKey === myZone);
-            const crossZoneAgents = otherAgents.filter(id => allAgentPositions[id].zoneKey !== myZone);
+            const sameZone = [];
+            const crossZone = [];
+            for (const id of otherAgents) {
+              const p = livePositions[id];
+              const d = Math.sqrt((s.currentPos.x - p.x) ** 2 + (s.currentPos.z - p.z) ** 2);
+              const entry = { id, dist: d };
+              if (p.zoneKey === myZone) sameZone.push(entry);
+              else crossZone.push(entry);
+            }
+            // Sort by distance (nearest first)
+            sameZone.sort((a, b) => a.dist - b.dist);
+            crossZone.sort((a, b) => a.dist - b.dist);
 
             let targetId;
-            if (sameZoneAgents.length > 0 && (Math.random() < 0.7 || crossZoneAgents.length === 0)) {
-              targetId = sameZoneAgents[Math.floor(Math.random() * sameZoneAgents.length)];
-            } else if (crossZoneAgents.length > 0) {
-              targetId = crossZoneAgents[Math.floor(Math.random() * crossZoneAgents.length)];
+            if (sameZone.length > 0 && (Math.random() < 0.7 || crossZone.length === 0)) {
+              // Pick nearest same-zone agent (with slight randomness in top 3)
+              const pool = sameZone.slice(0, Math.min(3, sameZone.length));
+              targetId = pool[Math.floor(Math.random() * pool.length)].id;
+            } else if (crossZone.length > 0) {
+              targetId = crossZone[0].id; // nearest cross-zone
             }
 
             if (targetId) visitAgent(targetId);
@@ -663,16 +834,51 @@ function AgentCharacter({
             } else if (s.mode === "traveling") {
               beginMeeting();
             } else if (s.mode === "nomad-traveling") {
-              // LOKI arrived at new zone, start normal activities there
               pickNextActivity();
             } else {
               pickNextActivity();
             }
           } else {
+            // Base movement toward target
+            let vx = (dx / dist) * s.moveSpeed;
+            let vz = (dz / dist) * s.moveSpeed;
+
+            // Reynolds separation force — steer away from nearby agents
+            const others = getAllPositions();
+            let sepX = 0, sepZ = 0;
+            for (const otherId in others) {
+              if (otherId === agentId) continue;
+              const o = others[otherId];
+              const ox = s.currentPos.x - o.x;
+              const oz = s.currentPos.z - o.z;
+              const oDist = Math.sqrt(ox * ox + oz * oz);
+              if (oDist < SEPARATION_RADIUS && oDist > 0.01) {
+                const force = (SEPARATION_RADIUS - oDist) / SEPARATION_RADIUS;
+                sepX += (ox / oDist) * force;
+                sepZ += (oz / oDist) * force;
+                // Hard minimum: strong push if too close
+                if (oDist < MIN_SEPARATION) {
+                  sepX += (ox / oDist) * 2;
+                  sepZ += (oz / oDist) * 2;
+                }
+              }
+            }
+            vx += sepX * SEPARATION_STRENGTH;
+            vz += sepZ * SEPARATION_STRENGTH;
+
             const moveAmount = Math.min(s.moveSpeed * delta, dist);
-            s.currentPos.x += (dx / dist) * moveAmount;
-            s.currentPos.z += (dz / dist) * moveAmount;
-            s.targetRotation = Math.atan2(dx, dz);
+            const vLen = Math.sqrt(vx * vx + vz * vz) || 1;
+            s.currentPos.x += (vx / vLen) * moveAmount;
+            s.currentPos.z += (vz / vLen) * moveAmount;
+
+            // Clamp to zone bounds (wandering mode)
+            if (s.mode === "wandering") {
+              s.currentPos.x = Math.max(zoneBounds.minX, Math.min(zoneBounds.maxX, s.currentPos.x));
+              s.currentPos.z = Math.max(zoneBounds.minZ, Math.min(zoneBounds.maxZ, s.currentPos.z));
+            }
+
+            // Rotation follows actual velocity (visually turns when steering)
+            s.targetRotation = Math.atan2(vx, vz);
           }
         }
         break;
@@ -701,6 +907,9 @@ function AgentCharacter({
       characterRef.current.position.z = s.currentPos.z - position[2];
       characterRef.current.rotation.y = s.currentRotation;
     }
+
+    // Write live position to registry (zero-cost plain JS)
+    updateAgentPosition(agentId, s.currentPos.x, s.currentPos.y, s.currentPos.z, s.mode, currentZoneKeyRef.current);
 
     // Selection ring animation
     if (selectionRingRef.current) {
