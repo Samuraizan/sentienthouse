@@ -606,15 +606,18 @@ function AgentCharacter({
   const pickNextActivity = useCallback(() => {
     const s = stateRef.current;
 
-    // 1. Offline → go home, idle
+    // 1. Offline → idle at home, face equipment
     if (status === "offline") {
+      s.currentPos.copy(s.homePos);
       s.targetPos.copy(s.homePos);
-      s.mode = "returning";
-      s.isMoving = true;
-      setCurrentMode("returning");
+      s.mode = "interacting";
+      s.isMoving = false;
+      s.activityEndTime = Date.now() + 30000;
+      s.targetRotation = Math.PI; // face -Z (toward screen/equipment)
+      setCurrentMode("idle");
       setActivityText("Offline");
       setActivityEmoji("💤");
-      startWalk();
+      startIdle();
       return;
     }
 
@@ -662,14 +665,17 @@ function AgentCharacter({
     //    Agents cycle through interaction points deterministically so they
     //    look alive even when no cron job is active.
     if (status === "dormant") {
-      // Dormant agents just stand at home
+      // Dormant agents idle at home facing the screen/equipment (no walk loop)
+      s.currentPos.copy(s.homePos);
       s.targetPos.copy(s.homePos);
-      s.mode = "returning";
-      s.isMoving = true;
-      setCurrentMode("returning");
-      setActivityText("Dormant");
+      s.mode = "interacting";
+      s.isMoving = false;
+      s.activityEndTime = Date.now() + 30000;
+      s.targetRotation = Math.PI; // face -Z (toward screen/equipment)
+      setCurrentMode("idle");
+      setActivityText("Standby mode");
       setActivityEmoji("");
-      startWalk();
+      startIdle();
       return;
     }
 
