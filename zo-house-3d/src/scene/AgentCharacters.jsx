@@ -13,13 +13,13 @@ import { ZONE_POSITIONS, ZONE_HOME_OFFSETS } from "./Zones";
  */
 
 const CHARACTER_CONFIG = {
-  zomadprime:   { model: "/models/characters/zomadprime-pirate.glb",  tint: null, scale: 3.0 },  // Captain Barbarossa
-  "blrxzo-jr":  { model: "/models/characters/blrxzo-jr-pirate.glb",  tint: null },               // Henry
-  "wtfxzo-jr":  { model: "/models/characters/wtfxzo-jr-pirate.glb",  tint: null },               // Skeleton
-  suki:         { model: "/models/characters/suki-pirate.glb",        tint: null },               // Anne
-  loki:         { model: "/models/characters/loki.glb",               tint: null },               // (unchanged)
-  wanda:        { model: "/models/characters/wanda-pirate.glb",       tint: null },               // Mako
-  yana:         { model: "/models/characters/yana-pirate.glb",        tint: null },               // Sharky
+  zomadprime:   { model: "/models/characters/zomadprime-pirate.glb",  tint: null, scale: 9.0 },   // Captain Barbarossa
+  "blrxzo-jr":  { model: "/models/characters/blrxzo-jr-pirate.glb",  tint: null, scale: 7.5 },   // Henry
+  "wtfxzo-jr":  { model: "/models/characters/wtfxzo-jr-pirate.glb",  tint: null, scale: 7.5 },   // Skeleton
+  suki:         { model: "/models/characters/suki-pirate.glb",        tint: null, scale: 7.5 },   // Anne
+  loki:         { model: "/models/characters/loki.glb",               tint: null },                // (unchanged, default 2.5)
+  wanda:        { model: "/models/characters/wanda-pirate.glb",       tint: null, scale: 7.5 },   // Mako
+  yana:         { model: "/models/characters/yana-pirate.glb",        tint: null, scale: 7.5 },   // Sharky
 };
 
 const PLATFORM_Y_OFFSET = 0.12;
