@@ -1,6 +1,6 @@
 import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useGLTF, Clone } from "@react-three/drei";
+import { useGLTF, Clone, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { ZONE_POSITIONS } from "./Zones";
 
@@ -130,47 +130,105 @@ function WTFxZoHouseWorkspace({ position }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// ZONE SIGN — Floating signpost with zone name
+// ZONE SIGN — Massive hovering signboard above each island
 // ═══════════════════════════════════════════════════════════════════
+
+const SIGN_HEIGHT = 38; // Float high above islands (visible from default camera Y=130)
+const SIGN_SCALE = 4;   // Overall sign scale multiplier
 
 function ZoneSign({ position, text, color }) {
   const signRef = useRef();
 
   useFrame((state) => {
     if (signRef.current) {
-      signRef.current.position.y = position[1] + 5.5 + Math.sin(state.clock.getElapsedTime() * 0.8) * 0.15;
+      const t = state.clock.getElapsedTime();
+      signRef.current.position.y = position[1] + SIGN_HEIGHT + Math.sin(t * 0.6) * 0.5;
     }
   });
 
+  const boardW = text.length * 1.8 + 6;
+  const boardH = 5;
+
   return (
-    <group ref={signRef} position={[position[0], position[1] + 5.5, position[2] - 14]}>
-      <mesh position={[0, -2.5, 0]} castShadow>
-        <cylinderGeometry args={[0.08, 0.1, 5, 8]} />
-        <meshStandardMaterial color="#4a3a2a" roughness={0.9} />
-      </mesh>
+    <group ref={signRef} position={[position[0], position[1] + SIGN_HEIGHT, position[2]]}>
+      {/* Main board — dark panel */}
       <mesh castShadow>
-        <boxGeometry args={[text.length * 0.65 + 1.5, 1.6, 0.15]} />
-        <meshStandardMaterial color="#1a1a2e" roughness={0.7} metalness={0.2} />
+        <boxGeometry args={[boardW, boardH, 0.4]} />
+        <meshStandardMaterial color="#0a0a1a" roughness={0.5} metalness={0.3} />
       </mesh>
-      <mesh position={[0, 0, 0.08]}>
-        <planeGeometry args={[text.length * 0.65 + 0.8, 1.1]} />
+
+      {/* Inner glow panel */}
+      <mesh position={[0, 0, 0.22]}>
+        <planeGeometry args={[boardW - 1.5, boardH - 1.2]} />
         <meshStandardMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={0.6}
+          emissiveIntensity={0.4}
           transparent
-          opacity={0.15}
+          opacity={0.12}
         />
       </mesh>
-      <mesh position={[0, 0.75, 0.08]}>
-        <boxGeometry args={[text.length * 0.65 + 1.2, 0.04, 0.02]} />
+
+      {/* Top accent bar */}
+      <mesh position={[0, boardH / 2 - 0.15, 0.22]}>
+        <boxGeometry args={[boardW - 0.6, 0.12, 0.05]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={2.0} />
+      </mesh>
+
+      {/* Bottom accent bar */}
+      <mesh position={[0, -boardH / 2 + 0.15, 0.22]}>
+        <boxGeometry args={[boardW - 0.6, 0.12, 0.05]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={2.0} />
+      </mesh>
+
+      {/* Side accent bars */}
+      <mesh position={[-boardW / 2 + 0.15, 0, 0.22]}>
+        <boxGeometry args={[0.12, boardH - 0.6, 0.05]} />
         <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.5} />
       </mesh>
-      <mesh position={[0, -0.75, 0.08]}>
-        <boxGeometry args={[text.length * 0.65 + 1.2, 0.04, 0.02]} />
+      <mesh position={[boardW / 2 - 0.15, 0, 0.22]}>
+        <boxGeometry args={[0.12, boardH - 0.6, 0.05]} />
         <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.5} />
       </mesh>
-      <pointLight position={[0, 0, 1]} color={color} intensity={1.5} distance={8} decay={2} />
+
+      {/* Corner accents — small glowing cubes */}
+      {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([cx, cy], i) => (
+        <mesh key={i} position={[cx * (boardW / 2 - 0.4), cy * (boardH / 2 - 0.4), 0.25]}>
+          <boxGeometry args={[0.3, 0.3, 0.1]} />
+          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={3.0} />
+        </mesh>
+      ))}
+
+      {/* Text label — Html overlay so it's always crisp */}
+      <Html
+        position={[0, 0, 0.3]}
+        center
+        distanceFactor={40}
+        occlude={false}
+        style={{ pointerEvents: "none", userSelect: "none" }}
+      >
+        <div style={{
+          fontFamily: "Inter, SF Pro Display, -apple-system, sans-serif",
+          textAlign: "center",
+          whiteSpace: "nowrap",
+        }}>
+          <div style={{
+            fontSize: "52px",
+            fontWeight: 800,
+            color: "#ffffff",
+            letterSpacing: "6px",
+            textTransform: "uppercase",
+            textShadow: `0 0 30px ${color}, 0 0 60px ${color}40, 0 4px 12px rgba(0,0,0,0.8)`,
+          }}>
+            {text}
+          </div>
+        </div>
+      </Html>
+
+      {/* Main light — illuminates the sign and area below */}
+      <pointLight position={[0, 0, 3]} color={color} intensity={8} distance={30} decay={2} />
+      {/* Downward light — casts glow onto the island */}
+      <pointLight position={[0, -3, 0]} color={color} intensity={4} distance={25} decay={2} />
     </group>
   );
 }
