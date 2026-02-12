@@ -93,36 +93,8 @@ export default function StatusBar() {
         </span>
       </div>
 
-      {/* Center: Agent status dots */}
-      <div className="status-bar__center">
-        <div className="status-bar__agent-dots">
-          {agents.map((agent) => {
-            const brightness = getStatusBrightness(agent.status);
-            return (
-              <div
-                key={agent.id}
-                className="status-bar__agent-dot-wrapper"
-                title={`${agent.name} \u2014 ${getStatusLabel(agent.status)}`}
-              >
-                <span
-                  className="status-bar__agent-dot"
-                  style={{
-                    backgroundColor: agent.color,
-                    opacity: brightness,
-                    boxShadow:
-                      brightness > 0.5
-                        ? `0 0 8px ${agent.color}80, 0 0 16px ${agent.color}40`
-                        : "none",
-                  }}
-                />
-                <span className="status-bar__agent-dot-label">
-                  {agent.name.split(" ")[0].slice(0, 3).toUpperCase()}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* Center: intentionally empty — agents visible in 3D scene */}
+      <div className="status-bar__center" />
 
       {/* Right: Metrics */}
       <div className="status-bar__right">
