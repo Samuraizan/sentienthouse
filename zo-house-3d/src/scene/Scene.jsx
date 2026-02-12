@@ -69,7 +69,7 @@ export default function Scene() {
         toneMappingExposure: 1.5,
       }}
       camera={{
-        position: [110, 80, 100],
+        position: [0, 130, 160],
         fov: 45,
         near: 0.1,
         far: 600,
