@@ -133,7 +133,7 @@ function WTFxZoHouseWorkspace({ position }) {
 // ZONE SIGN — Massive hovering signboard above each island
 // ═══════════════════════════════════════════════════════════════════
 
-const SIGN_HEIGHT = 38; // Float high above islands (visible from default camera Y=130)
+const SIGN_HEIGHT = 48; // Float high above islands (visible from default camera Y=130)
 const SIGN_SCALE = 4;   // Overall sign scale multiplier
 
 function ZoneSign({ position, text, color }) {

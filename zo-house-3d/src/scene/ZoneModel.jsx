@@ -101,7 +101,7 @@ function BigScreenText() {
 
     return (
         <Html
-            position={[4, 27, -10]}
+            position={[0, 27, -10]}
             center
             distanceFactor={12}
             occlude={false}
