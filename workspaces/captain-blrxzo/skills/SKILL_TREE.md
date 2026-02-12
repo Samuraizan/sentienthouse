@@ -18,7 +18,8 @@
 │   └── task-entry          ✅ Active    Laundry List task management → main list tab
 │
 └── 🤖 Automated
-    └── agent-kot           ✅ Active    Fudr emails → Agent-KOT tab (every 30 min)
+    ├── agent-kot           ✅ Active    Fudr emails → Agent-KOT tab (every 30 min)
+    └── pms-update   ✅ Active    Supabase PMS → pro-rata → Summary 2026!Accommodation (daily 6AM)
 
 📋 REPORTING
 │
@@ -44,6 +45,7 @@
 | activity-revenue | data-entry | human-confirmed | active | Activity Revenue | message/image |
 | task-entry | data-entry | human-confirmed | active | Laundry List (main list) | message |
 | agent-kot | data-entry | automated | active | Agent-KOT | every 30 min |
+| pms-update | data-entry | automated | active | Summary 2026 (Accommodation cell) | daily 6AM IST |
 | morning-audit | reporting | scheduled | active | Laundry List (read-only) | daily 10AM IST |
 | daily-recap | reporting | scheduled | locked | Summary 2026 (read-only) | daily 8AM IST |
 | guest-flow | operations | human-confirmed | locked | — | message |
@@ -77,7 +79,8 @@ Skills are built and activated in this order:
 1. ✅ Data Entry (automated) — agent-kot
 2. ✅ Data Entry (human-confirmed) — running-opex, co-working-entry, activity-revenue, task-entry
 3. ✅ Reporting — morning-audit (read-only, depends on task-entry for writes)
-4. 🔒 Reporting — daily-recap (needs accommodation auto-calc from Supabase)
-5. 🔒 Operations — guest-flow, maintenance-triage
-6. 🔒 Reporting — staff-report (needs Supabase housekeeping tables)
-7. 🔒 Utility — google-workspace
+4. ✅ Data Entry (automated) — pms-update (Supabase → pro-rata → Summary sheet)
+5. 🔒 Reporting — daily-recap (depends on pms-update for accommodation figures)
+6. 🔒 Operations — guest-flow, maintenance-triage
+7. 🔒 Reporting — staff-report (needs Supabase housekeeping tables)
+8. 🔒 Utility — google-workspace

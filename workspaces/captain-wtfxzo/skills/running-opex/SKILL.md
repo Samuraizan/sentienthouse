@@ -137,6 +137,16 @@ Append the confirmed row using the Sheets API append method.
 - Derive Accrual Month from Date automatically — captain should not need to specify month separately
 - If the expense is for a different month than the date (e.g. "this is for January"), use the month the captain specifies
 
+### CRITICAL: Preventing Date Format Flip
+
+Google Sheets `USER_ENTERED` mode auto-interprets `12/02/2026` as **December 2** (US format) instead of **February 12** (Indian DD/MM/YYYY format). To prevent this:
+
+**Always prefix the date value with an apostrophe** (`'`) when writing to the sheet. The apostrophe forces Sheets to treat it as plain text, preserving the DD/MM/YYYY format exactly as intended.
+
+Example: write `'12/02/2026` (not `12/02/2026`) into the Date cell.
+
+The apostrophe is invisible in the cell display — Sheets treats it as a text prefix marker, so the cell will show `12/02/2026` correctly.
+
 ---
 
 ## Valid Heads of Account

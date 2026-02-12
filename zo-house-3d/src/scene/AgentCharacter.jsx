@@ -129,6 +129,11 @@ const TASK_TO_INTERACTION = {
   "goa-guest-welcome":    { zone: "wtfxzo-house", id: "welcome" },
   "weekly-report":        { zone: "hq", id: "display-wall" },
   "daily-standup":        { zone: "hq", id: "conference" },
+  "pms-update":           { zone: "blrxzo-house", id: "desk" },
+  "running-opex":         { zone: "blrxzo-house", id: "desk" },
+  "co-working-entry":     { zone: "blrxzo-house", id: "checkin" },
+  "activity-revenue":     { zone: "blrxzo-house", id: "ops-board" },
+  "morning-audit":        { zone: "hq", id: "display-wall" },
 };
 
 // ── Main Component ─────────────────────────────────────────────────

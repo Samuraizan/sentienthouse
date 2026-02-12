@@ -26,8 +26,8 @@ let isPolling = false;
 // as fallback when the gateway does not return this data natively.
 const AGENT_SKILLS = {
   zomadprime:  ["delegate-task", "morning-briefing", "weekly-scorecard"],
-  "blrxzo-jr": ["running-opex", "co-working-entry", "activity-revenue", "task-entry", "agent-kot", "morning-audit"],
-  "wtfxzo-jr": ["running-opex", "co-working-entry", "activity-revenue", "task-entry", "agent-kot", "morning-audit"],
+  "blrxzo-jr": ["running-opex", "co-working-entry", "activity-revenue", "task-entry", "agent-kot", "morning-audit", "pms-update"],
+  "wtfxzo-jr": ["running-opex", "co-working-entry", "activity-revenue", "task-entry", "agent-kot", "morning-audit", "pms-update"],
   suki:        ["invoice-maker", "event-inquiry", "luma-sync", "event-marketing", "event-recap", "rev-tracking"],
   loki:        ["guest-welcome", "daily-vibe", "city-event", "community-pulse"],
   wanda:       ["lead-qualify", "outreach-sequence", "pipeline-update", "founder-marketing"],

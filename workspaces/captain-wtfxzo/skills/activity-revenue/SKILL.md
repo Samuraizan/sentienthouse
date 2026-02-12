@@ -150,6 +150,10 @@ Append the confirmed row using the Sheets API append method.
 - **CHECKIN TIME:** `HH:MM AM/PM` (e.g. `4:00 PM`)
 - **CHECKOUT TIME:** `HH:MM AM/PM` or blank if not known
 
+### CRITICAL: Preventing Date Format Flip
+
+Google Sheets `USER_ENTERED` mode auto-interprets `12/02/2026` as December 2 (US mm/dd) instead of February 12 (Indian dd/mm). **Always prefix the DATE value with an apostrophe** (`'12/02/2026`) to force plain text. The apostrophe is invisible in the cell display.
+
 ---
 
 ## Multiple Bookings in One Message

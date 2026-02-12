@@ -156,7 +156,7 @@ function parseSkillFile(filePath) {
     // Determine category from description or name
     let category = "operations";
     const desc = (description + " " + name).toLowerCase();
-    if (desc.includes("data entry") || desc.includes("expense") || desc.includes("opex") || desc.includes("co-working") || desc.includes("kot") || desc.includes("cafe order")) category = "data-entry";
+    if (desc.includes("data entry") || desc.includes("expense") || desc.includes("opex") || desc.includes("co-working") || desc.includes("kot") || desc.includes("cafe order") || desc.includes("activity-revenue") || desc.includes("pms-update")) category = "data-entry";
     else if (desc.includes("google") || desc.includes("sync") || desc.includes("api")) category = "integration";
     else if (desc.includes("invoice") || desc.includes("revenue") || desc.includes("financial") || desc.includes("activity revenue")) category = "finance";
     else if (desc.includes("event") || desc.includes("luma")) category = "events";
