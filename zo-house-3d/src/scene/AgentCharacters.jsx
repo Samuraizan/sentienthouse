@@ -13,13 +13,13 @@ import { ZONE_POSITIONS, ZONE_HOME_OFFSETS } from "./Zones";
  */
 
 const CHARACTER_CONFIG = {
-  zomadprime:   { model: "/models/characters/zomadprime.glb",  tint: null },
-  "blrxzo-jr":  { model: "/models/characters/blrxzo-jr.glb",  tint: null },
-  "wtfxzo-jr":  { model: "/models/characters/wtfxzo-jr.glb",  tint: null },
-  suki:         { model: "/models/characters/suki.glb",        tint: null },
-  loki:         { model: "/models/characters/loki.glb",        tint: null },
-  wanda:        { model: "/models/characters/wanda.glb",       tint: "#ff8866" },
-  yana:         { model: "/models/characters/yana.glb",        tint: "#ff88cc" },
+  zomadprime:   { model: "/models/characters/zomadprime-pirate.glb",  tint: null, scale: 3.0 },  // Captain Barbarossa
+  "blrxzo-jr":  { model: "/models/characters/blrxzo-jr-pirate.glb",  tint: null },               // Henry
+  "wtfxzo-jr":  { model: "/models/characters/wtfxzo-jr-pirate.glb",  tint: null },               // Skeleton
+  suki:         { model: "/models/characters/suki-pirate.glb",        tint: null },               // Anne
+  loki:         { model: "/models/characters/loki.glb",               tint: null },               // (unchanged)
+  wanda:        { model: "/models/characters/wanda-pirate.glb",       tint: null },               // Mako
+  yana:         { model: "/models/characters/yana-pirate.glb",        tint: null },               // Sharky
 };
 
 const PLATFORM_Y_OFFSET = 0.12;
@@ -84,6 +84,7 @@ export default function AgentCharacters() {
         agentRole: agent.role,
         agentHomeZone: agent.homeZone,
         currentTask: agent.currentTask,
+        characterScale: config.scale || 2.5,
       });
     });
 
@@ -112,6 +113,7 @@ export default function AgentCharacters() {
           onSelect={handleSelect}
           allAgentPositions={allAgentPositions}
           currentTask={char.currentTask}
+          characterScale={char.characterScale}
         />
       ))}
     </group>

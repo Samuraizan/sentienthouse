@@ -13,13 +13,13 @@ import * as THREE from "three";
 
 // Character model paths - same as main scene uses
 const CHARACTER_MODELS = {
-  zomadprime: "/models/characters/zomadprime.glb",
-  "blrxzo-jr": "/models/characters/blrxzo-jr.glb",
-  "wtfxzo-jr": "/models/characters/wtfxzo-jr.glb",
-  suki: "/models/characters/suki.glb",
+  zomadprime: "/models/characters/zomadprime-pirate.glb",
+  "blrxzo-jr": "/models/characters/blrxzo-jr-pirate.glb",
+  "wtfxzo-jr": "/models/characters/wtfxzo-jr-pirate.glb",
+  suki: "/models/characters/suki-pirate.glb",
   loki: "/models/characters/loki.glb",
-  wanda: "/models/characters/wanda.glb",
-  yana: "/models/characters/yana.glb",
+  wanda: "/models/characters/wanda-pirate.glb",
+  yana: "/models/characters/yana-pirate.glb",
 };
 
 function findAction(actions, ...names) {
