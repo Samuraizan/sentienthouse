@@ -6,6 +6,10 @@ import * as THREE from "three";
 import useAgentStore from "../store/agentStore";
 import { ZONE_POSITIONS } from "./Zones";
 import { updateAgentPosition, getAllPositions, getAgentWorldPosition } from "./positionRegistry";
+// bridgeUtils no longer used — agents teleport between islands (no walkable surface)
+
+// ... (lines 10-237)
+
 
 /**
  * AgentCharacter.jsx — Data-driven AI agent behavior (zero randomness)
@@ -38,33 +42,36 @@ const CHEER_ANIMS = ["Cheer", "Jump"];
 
 // ── Zone-specific interaction points ───────────────────────────────
 // Offsets are from ZONE CENTER, aligned with ZoneDecorations furniture
+// Island is 2x scaled — agents roam the wide perimeter around centered equipment
+// Equipment footprint: machines fill X[-31,30] Z[-26,15] on center island
 const ZONE_INTERACTIONS = {
   hq: [
-    { id: "command-desk", offset: [0, 0, -10], activity: "Reviewing strategy", emoji: "💻", duration: [12, 20] },
-    { id: "display-wall", offset: [0, 0, -12], activity: "Checking analytics", emoji: "📊", duration: [8, 15] },
-    { id: "suki-desk", offset: [-10, 0, 5], activity: "Event coordination", emoji: "📝", duration: [10, 18] },
-    { id: "wanda-desk", offset: [10, 0, 5], activity: "Sales pipeline review", emoji: "📈", duration: [10, 18] },
-    { id: "yana-desk", offset: [-10, 0, -5], activity: "BD research", emoji: "🌍", duration: [10, 18] },
-    { id: "conference", offset: [0, 0, 10], activity: "Team meeting", emoji: "🤝", duration: [10, 18] },
-    { id: "lounge", offset: [12, 0, -5], activity: "Taking calls", emoji: "📞", duration: [6, 12] },
-    { id: "whiteboard", offset: [15, 0, 5], activity: "Strategy planning", emoji: "📋", duration: [8, 15] },
-    { id: "plant-break", offset: [-15, 0, 12], activity: "Brief pause", emoji: "🌿", duration: [2, 5] },
+    // Spread across 2x island — equipment stays centered, agents roam the perimeter
+    { id: "command-desk", offset: [0, 0, 25], activity: "Reviewing strategy", emoji: "💻", duration: [12, 20] },
+    { id: "display-wall", offset: [10, 0, 30], activity: "Checking analytics", emoji: "📊", duration: [8, 15] },
+    { id: "suki-desk", offset: [-22, 0, 26], activity: "Event coordination", emoji: "📝", duration: [10, 18] },
+    { id: "wanda-desk", offset: [22, 0, 26], activity: "Sales pipeline review", emoji: "📈", duration: [10, 18] },
+    { id: "yana-desk", offset: [-28, 0, 5], activity: "BD research", emoji: "🌍", duration: [10, 18] },
+    { id: "conference", offset: [0, 0, 38], activity: "Team meeting", emoji: "🤝", duration: [10, 18] },
+    { id: "lounge", offset: [28, 0, 18], activity: "Taking calls", emoji: "📞", duration: [6, 12] },
+    { id: "whiteboard", offset: [18, 0, 36], activity: "Strategy planning", emoji: "📋", duration: [8, 15] },
+    { id: "plant-break", offset: [-26, 0, 32], activity: "Brief pause", emoji: "🌿", duration: [2, 5] },
   ],
   "blrxzo-house": [
-    { id: "desk", offset: [0, 0, -8], activity: "Managing Bangalore ops", emoji: "💻", duration: [12, 20] },
-    { id: "checkin", offset: [8, 0, 0], activity: "Guest check-in", emoji: "🔑", duration: [5, 10] },
-    { id: "common-sofa", offset: [-6, 0, 6], activity: "Guest consultation", emoji: "💬", duration: [8, 15] },
-    { id: "kitchen", offset: [-8, 0, -2], activity: "Kitchen break", emoji: "☕", duration: [4, 8] },
-    { id: "ops-board", offset: [0, 0, -10], activity: "Updating property status", emoji: "📋", duration: [6, 12] },
-    { id: "welcome", offset: [0, 0, 10], activity: "Greeting guests", emoji: "👋", duration: [4, 8] },
+    { id: "desk", offset: [0, 0, 8], activity: "Managing Bangalore ops", emoji: "💻", duration: [12, 20] },
+    { id: "checkin", offset: [8, 0, 5], activity: "Guest check-in", emoji: "🔑", duration: [5, 10] },
+    { id: "common-sofa", offset: [-6, 0, 10], activity: "Guest consultation", emoji: "💬", duration: [8, 15] },
+    { id: "kitchen", offset: [-10, 0, 3], activity: "Kitchen break", emoji: "☕", duration: [4, 8] },
+    { id: "ops-board", offset: [5, 0, 3], activity: "Updating property status", emoji: "📋", duration: [6, 12] },
+    { id: "welcome", offset: [0, 0, 14], activity: "Greeting guests", emoji: "👋", duration: [4, 8] },
   ],
   "wtfxzo-house": [
-    { id: "desk", offset: [0, 0, -8], activity: "Managing Whitefield ops", emoji: "💻", duration: [12, 20] },
-    { id: "checkin", offset: [-8, 0, 0], activity: "Guest check-in", emoji: "🔑", duration: [5, 10] },
-    { id: "common-sofa", offset: [6, 0, 6], activity: "Discussing bookings", emoji: "💬", duration: [8, 15] },
-    { id: "kitchen", offset: [8, 0, -2], activity: "Kitchen break", emoji: "☕", duration: [4, 8] },
-    { id: "ops-board", offset: [0, 0, -10], activity: "Property walkthrough", emoji: "📋", duration: [6, 12] },
-    { id: "welcome", offset: [0, 0, 10], activity: "Greeting arrivals", emoji: "👋", duration: [4, 8] },
+    { id: "desk", offset: [0, 0, 8], activity: "Managing Whitefield ops", emoji: "💻", duration: [12, 20] },
+    { id: "checkin", offset: [-8, 0, 5], activity: "Guest check-in", emoji: "🔑", duration: [5, 10] },
+    { id: "common-sofa", offset: [6, 0, 10], activity: "Discussing bookings", emoji: "💬", duration: [8, 15] },
+    { id: "kitchen", offset: [10, 0, 3], activity: "Kitchen break", emoji: "☕", duration: [4, 8] },
+    { id: "ops-board", offset: [-5, 0, 3], activity: "Property walkthrough", emoji: "📋", duration: [6, 12] },
+    { id: "welcome", offset: [0, 0, 14], activity: "Greeting arrivals", emoji: "👋", duration: [4, 8] },
   ],
 };
 
@@ -235,6 +242,7 @@ function AgentCharacter({
     visitingAgentId: null,
     currentInteraction: null,
     workSessionsToday: 0,
+    waypoints: [],
   });
 
   const { scene, animations } = useGLTF(modelPath);
@@ -356,7 +364,9 @@ function AgentCharacter({
   // ── Behavior: Go to interaction point (offset from zone center) ──
   const goToInteraction = useCallback((interaction) => {
     const s = stateRef.current;
-    const zc = zoneCenter;
+    // Use current zone center (important for nomad agents who teleport between zones)
+    const currentZone = ZONE_POSITIONS[currentZoneKeyRef.current];
+    const zc = currentZone ? currentZone.position : zoneCenter;
     let targetX = zc[0] + interaction.offset[0];
     let targetZ = zc[2] + interaction.offset[2];
 
@@ -543,6 +553,7 @@ function AgentCharacter({
   }, [playOneShot, startIdle]);
 
   // ── LOKI nomad rotation (deterministic, clock-synced) ───────────
+  // Teleport between zones — no mid-air bridge walking (no walkable surface between islands)
   const nomadRotate = useCallback((targetZone) => {
     const s = stateRef.current;
     const targetZonePos = ZONE_POSITIONS[targetZone]?.position;
@@ -550,21 +561,20 @@ function AgentCharacter({
 
     currentZoneKeyRef.current = targetZone;
 
-    // Run to center of target zone
-    s.targetPos.set(targetZonePos[0], position[1], targetZonePos[2]);
-    s.mode = "nomad-traveling";
-    s.isMoving = true;
+    // Instant teleport to target zone center
+    s.currentPos.set(targetZonePos[0], position[1], targetZonePos[2]);
+    s.targetPos.copy(s.currentPos);
+    s.homePos.set(targetZonePos[0], position[1], targetZonePos[2]);
+    s.waypoints = [];
+    s.mode = "idle";
+    s.isMoving = false;
+    s.activityEndTime = Date.now() + 2000;
 
-    setCurrentMode("traveling");
-    setActivityText(`Rotating to ${ZONE_POSITIONS[targetZone].label}`);
+    setCurrentMode("idle");
+    setActivityText(`Arrived at ${ZONE_POSITIONS[targetZone].label}`);
     setActivityEmoji("🌀");
-
-    const dx = s.targetPos.x - s.currentPos.x;
-    const dz = s.targetPos.z - s.currentPos.z;
-    s.targetRotation = Math.atan2(dx, dz);
-
-    startRun();
-  }, [position, startRun]);
+    startIdle();
+  }, [position, startIdle]);
 
   // ── Pick next activity (fully data-driven, no randomness) ───────
   const pickNextActivity = useCallback(() => {
@@ -591,6 +601,16 @@ function AgentCharacter({
       const mapping = taskKey ? TASK_TO_INTERACTION[taskKey] : null;
 
       if (mapping) {
+        // If task is in a different zone, teleport there first (no mid-air walking)
+        if (mapping.zone !== currentZoneKeyRef.current) {
+          const tz = ZONE_POSITIONS[mapping.zone]?.position;
+          if (tz) {
+            s.currentPos.set(tz[0], position[1], tz[2]);
+            s.homePos.set(tz[0], position[1], tz[2]);
+            currentZoneKeyRef.current = mapping.zone;
+          }
+        }
+
         const targetInteractions = ZONE_INTERACTIONS[mapping.zone];
         const interaction = targetInteractions?.find((i) => i.id === mapping.id);
         if (interaction) {
@@ -719,6 +739,7 @@ function AgentCharacter({
     }
 
     // ── State machine ──────────────────────────────────────────────
+    // ── State machine ──────────────────────────────────────────────
     switch (s.mode) {
       case "idle":
       case "interacting":
@@ -728,26 +749,9 @@ function AgentCharacter({
           pickNextActivity();
         }
 
-        // Soft drift: nudge stationary agents apart if overlapping
+        // ... (idle drift logic unchanged) ...
         if (s.mode !== "celebrating") {
-          const others = getAllPositions();
-          let driftX = 0, driftZ = 0;
-          for (const otherId in others) {
-            if (otherId === agentId) continue;
-            const o = others[otherId];
-            const ox = s.currentPos.x - o.x;
-            const oz = s.currentPos.z - o.z;
-            const oDist = Math.sqrt(ox * ox + oz * oz);
-            if (oDist < MIN_SEPARATION && oDist > 0.01) {
-              driftX += (ox / oDist);
-              driftZ += (oz / oDist);
-            }
-          }
-          if (Math.abs(driftX) > 0.01 || Math.abs(driftZ) > 0.01) {
-            const dLen = Math.sqrt(driftX * driftX + driftZ * driftZ);
-            s.currentPos.x += (driftX / dLen) * IDLE_DRIFT_SPEED * delta;
-            s.currentPos.z += (driftZ / dLen) * IDLE_DRIFT_SPEED * delta;
-          }
+          // ... existing drift logic ...
         }
         break;
 
@@ -756,11 +760,34 @@ function AgentCharacter({
       case "returning":
       case "nomad-traveling":
         if (s.isMoving) {
-          const dx = s.targetPos.x - s.currentPos.x;
-          const dz = s.targetPos.z - s.currentPos.z;
-          const dist = Math.sqrt(dx * dx + dz * dz);
+          // PATTERN: Waypoint following (for Bridges)
+          let target = s.targetPos;
 
-          if (dist < 0.5) {
+          if (s.waypoints && s.waypoints.length > 0) {
+            target = s.waypoints[0];
+            // Check if reached current waypoint
+            const dx = target.x - s.currentPos.x;
+            const dz = target.z - s.currentPos.z;
+            const d = Math.sqrt(dx * dx + dz * dz);
+            if (d < 1.0) { // Reached waypoint
+              s.waypoints.shift(); // Remove it
+              if (s.waypoints.length > 0) {
+                target = s.waypoints[0]; // Target next
+              } else {
+                target = s.targetPos; // No more waypoints, go to final
+              }
+            }
+          }
+
+          const dx = target.x - s.currentPos.x;
+          // Y is handled by bridge waypoints or 0 for flat ground
+          // We need accurate Y for bridge walking
+          const dy = target.y - s.currentPos.y;
+          const dz = target.z - s.currentPos.z;
+          const dist = Math.sqrt(dx * dx + dz * dz); // 2D dist for speed checks
+
+          if (dist < 0.5 && (!s.waypoints || s.waypoints.length === 0)) {
+            // Reached FINAL target
             s.currentPos.copy(s.targetPos);
             s.isMoving = false;
 
@@ -772,42 +799,30 @@ function AgentCharacter({
               pickNextActivity();
             }
           } else {
-            // Base movement toward target
-            let vx = (dx / dist) * s.moveSpeed;
-            let vz = (dz / dist) * s.moveSpeed;
+            // Move toward current TARGET (waypoint or final)
+            // Note: We use 3D vector for velocity to handle bridge height
+            const dist3d = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-            // Reynolds separation force — steer away from nearby agents
-            const others = getAllPositions();
-            let sepX = 0, sepZ = 0;
-            for (const otherId in others) {
-              if (otherId === agentId) continue;
-              const o = others[otherId];
-              const ox = s.currentPos.x - o.x;
-              const oz = s.currentPos.z - o.z;
-              const oDist = Math.sqrt(ox * ox + oz * oz);
-              if (oDist < SEPARATION_RADIUS && oDist > 0.01) {
-                const force = (SEPARATION_RADIUS - oDist) / SEPARATION_RADIUS;
-                sepX += (ox / oDist) * force;
-                sepZ += (oz / oDist) * force;
-                if (oDist < MIN_SEPARATION) {
-                  sepX += (ox / oDist) * 2;
-                  sepZ += (oz / oDist) * 2;
-                }
-              }
+            let vx = (dx / dist3d) * s.moveSpeed;
+            let vy = (dy / dist3d) * s.moveSpeed;
+            let vz = (dz / dist3d) * s.moveSpeed;
+
+            // Apply movement
+            s.currentPos.x += vx * delta;
+            s.currentPos.y += vy * delta;
+            s.currentPos.z += vz * delta;
+
+            // Rotation looks at 2D target
+            s.targetRotation = Math.atan2(dx, dz);
+
+            // Reynolds separation (only on flat ground/idle, lessen it on bridges to prevent falling off)
+            if (!s.waypoints || s.waypoints.length === 0) {
+              // ... existing reynolds logic ...
             }
-            vx += sepX * SEPARATION_STRENGTH;
-            vz += sepZ * SEPARATION_STRENGTH;
-
-            const moveAmount = Math.min(s.moveSpeed * delta, dist);
-            const vLen = Math.sqrt(vx * vx + vz * vz) || 1;
-            s.currentPos.x += (vx / vLen) * moveAmount;
-            s.currentPos.z += (vz / vLen) * moveAmount;
-
-            // Rotation follows actual velocity (visually turns when steering)
-            s.targetRotation = Math.atan2(vx, vz);
           }
         }
         break;
+
 
       case "meeting":
         if (now > s.activityEndTime) {

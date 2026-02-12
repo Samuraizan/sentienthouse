@@ -11,11 +11,11 @@ const ARRIVE_THRESHOLD = 0.05;
 
 const PRESETS = {
   overview: {
-    position: new THREE.Vector3(90, 70, 90),
+    position: new THREE.Vector3(110, 80, 100), // pulled back for 2x island
     target: new THREE.Vector3(0, 0, 0),
   },
   topdown: {
-    position: new THREE.Vector3(0.001, 140, 0.001),
+    position: new THREE.Vector3(0.001, 200, 0.001), // higher for wider island
     target: new THREE.Vector3(0, 0, 0),
   },
 };
@@ -59,7 +59,7 @@ export default function CameraController() {
   const cameraPreset = useAgentStore((s) => s.cameraPreset);
   const agents = useAgentStore((s) => s.agents);
 
-  const goalPosition = useRef(new THREE.Vector3(90, 70, 90));
+  const goalPosition = useRef(new THREE.Vector3(110, 80, 100));
   const goalTarget = useRef(new THREE.Vector3(0, 0, 0));
   const isTransitioning = useRef(false);
   const isCinematic = useRef(false);
@@ -97,8 +97,8 @@ export default function CameraController() {
 
     if (isCinematic.current) {
       cinematicAngle.current += CINEMATIC_ORBIT_SPEED * delta;
-      const radius = 55;
-      const height = 28;
+      const radius = 120;
+      const height = 55;
       const a = cinematicAngle.current;
       camera.position.set(
         radius * Math.sin(a),

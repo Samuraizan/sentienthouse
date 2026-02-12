@@ -39,16 +39,8 @@ export default function App() {
         {/* Bottom-right metrics card */}
         <MetricsDashboard />
 
-        {/* Bottom-left camera preset controls */}
-        <CameraControls />
-
         {/* Right-side agent detail panel (slides in on select) */}
         <AgentPanel />
-
-        {/* Bottom info bar */}
-        <div className="bottom-bar">
-          SCROLL TO ZOOM &nbsp;&bull;&nbsp; DRAG TO ROTATE &nbsp;&bull;&nbsp; RIGHT-DRAG TO PAN &nbsp;&bull;&nbsp; 1-3 CAMERA PRESETS &nbsp;&bull;&nbsp; ESC RESET
-        </div>
       </div>
 
       {/* Full-screen skill tree modal — rendered outside ui-overlay so it sits above all 3D Html labels */}

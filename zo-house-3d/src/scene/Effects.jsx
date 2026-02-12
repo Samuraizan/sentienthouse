@@ -34,11 +34,11 @@ function FloatingParticles() {
     const col = new Float32Array(PARTICLE_COUNT * 3);
 
     const warmColors = [
-      new THREE.Color("#ff9966"),
-      new THREE.Color("#ffcc88"),
-      new THREE.Color("#ffddaa"),
       new THREE.Color("#ff7744"),
-      new THREE.Color("#ffe0c0"),
+      new THREE.Color("#cc66aa"),
+      new THREE.Color("#ff9955"),
+      new THREE.Color("#aa55cc"),
+      new THREE.Color("#ffaa66"),
     ];
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {

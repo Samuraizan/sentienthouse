@@ -2,15 +2,15 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 
 /**
- * Lighting.jsx — Warm studio-style lighting rig for the Zo House 3D Command Center.
+ * Lighting.jsx — Dusk / golden-hour lighting rig for the Zo House 3D Command Center.
  *
- * Bright, warm lighting that makes characters pop against the dark background.
- * No colored point lights — clean, well-lit studio feel.
+ * Warm amber key light, cool purple-blue fill from opposite side,
+ * hemisphere blending warm sky into cool ground — sunset feel.
  */
 export default function Lighting() {
   const dirLightRef = useRef();
 
-  // Optional: subtle light animation (slow drift) to feel alive
+  // Subtle light drift to feel alive
   useFrame(({ clock }) => {
     if (dirLightRef.current) {
       const t = clock.getElapsedTime();
@@ -21,38 +21,45 @@ export default function Lighting() {
 
   return (
     <>
-      {/* Neutral white ambient fill — keeps everything visible */}
-      <ambientLight intensity={1.0} color="#ffffff" />
+      {/* Ambient fill — warm tint, lower intensity for dusk contrast */}
+      <ambientLight intensity={0.6} color="#ffd4a8" />
 
-      {/* Hemisphere light — warm cream sky, warm brown ground */}
+      {/* Hemisphere light — warm peach sky fading to deep purple ground */}
       <hemisphereLight
-        skyColor="#ffeedd"
-        groundColor="#443322"
-        intensity={1.0}
+        skyColor="#ff9966"
+        groundColor="#2a1535"
+        intensity={0.8}
       />
 
-      {/* Primary directional light — bright white from above-front, casts shadows */}
+      {/* Key light — warm amber sun low on the horizon, casts long shadows */}
       <directionalLight
         ref={dirLightRef}
-        position={[10, 20, 10]}
-        intensity={3.0}
-        color="#ffffff"
+        position={[10, 12, 10]}
+        intensity={2.5}
+        color="#ffaa55"
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
-        shadow-camera-far={100}
-        shadow-camera-left={-30}
-        shadow-camera-right={30}
-        shadow-camera-top={30}
-        shadow-camera-bottom={-30}
+        shadow-camera-far={200}
+        shadow-camera-left={-120}
+        shadow-camera-right={120}
+        shadow-camera-top={60}
+        shadow-camera-bottom={-60}
         shadow-bias={-0.0005}
       />
 
-      {/* Fill directional light — warm tint from opposite side */}
+      {/* Fill light — cool purple-blue from opposite side for dusk contrast */}
       <directionalLight
         position={[-8, 12, -8]}
-        intensity={1.5}
-        color="#ffddcc"
+        intensity={1.0}
+        color="#8866cc"
+      />
+
+      {/* Rim light — faint warm backlight to outline silhouettes */}
+      <directionalLight
+        position={[-5, 8, 15]}
+        intensity={0.6}
+        color="#ff7744"
       />
     </>
   );

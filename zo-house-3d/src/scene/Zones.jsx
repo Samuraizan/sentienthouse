@@ -18,19 +18,19 @@ import ZonePlatform from "./ZonePlatform";
 export const ZONE_POSITIONS = {
   hq: {
     position: [0, 0, 0],
-    size: [60, 60],
+    size: [116, 100], // 2x island footprint — equipment stays centered
     color: "#FFD700",
     label: "Interdimensional HQ",
   },
   "blrxzo-house": {
-    position: [-55, 0, 0],
-    size: [42, 42],
+    position: [-91, 0, 0], // Aligned to left satellite island center
+    size: [55, 40],
     color: "#00BFFF",
     label: "BLRxZo House",
   },
   "wtfxzo-house": {
-    position: [55, 0, 0],
-    size: [42, 42],
+    position: [91, 0, 0], // Aligned to right satellite island center
+    size: [55, 40],
     color: "#FF6347",
     label: "WTFxZo House",
   },
@@ -41,13 +41,15 @@ export const ZONE_POSITIONS = {
  * Prevents agents from stacking on top of each other.
  */
 export const ZONE_HOME_OFFSETS = {
-  zomadprime:  [0, 0, -8],
-  suki:        [-10, 0, 5],
-  wanda:       [10, 0, 5],
-  yana:        [-10, 0, -5],
-  loki:        [8, 0, -5],
-  "blrxzo-jr": [0, 0, -5],
-  "wtfxzo-jr": [0, 0, -5],
+  // HQ agents: spread around 2x island (equipment occupies center X[-31,30] Z[-26,15])
+  zomadprime: [0, 0, 30],     // front center — commanding view
+  suki: [-22, 0, 26],         // front-left quadrant
+  wanda: [22, 0, 26],         // front-right quadrant
+  yana: [-28, 0, 0],          // left flank of equipment
+  loki: [28, 0, 0],           // right flank of equipment
+  // Satellite agents: front of their islands (unchanged)
+  "blrxzo-jr": [0, 0, 8],
+  "wtfxzo-jr": [0, 0, 8],
 };
 
 /**
