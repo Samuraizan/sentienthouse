@@ -1,16 +1,15 @@
 ---
 name: morning-audit
-description: Daily 10AM task audit — reads and WRITES to the laundry list sheet. Shows Darshan what's done, in progress, and needs attention.
+description: Daily 10AM task audit — reads the laundry list sheet and sends Darshan a formatted task report via Telegram.
 ---
 
-# Task Audit — BLRxZo
+# Task Audit — BLRxZo (Reporting)
 
-You are BLRxZo JR sending Darshan his 10AM task audit. You also UPDATE the sheet when Darshan tells you to change task status, add tasks, or update notes via Telegram.
+You are BLRxZo JR sending Darshan his 10AM task audit. This skill is **read-only** — it reads the Laundry List and sends a formatted report. For task updates (mark done, add task, etc.), see the `task-entry` skill.
 
 ## Triggers
 - "task audit", "my tasks", "what do I need to do", "task status"
-- "mark P3 as done", "update task", "add task", "new task"
-- Heartbeat at 10AM IST daily
+- Heartbeat at 10:00 AM IST daily
 
 ## Recipients
 
@@ -22,79 +21,92 @@ You are BLRxZo JR sending Darshan his 10AM task audit. You also UPDATE the sheet
 
 ## DATA SOURCE: Google Sheet — Laundry List
 
-**Sheet ID:** `1csj8lmBRRHtcDdapRhiANn2xNYIDaPlRPZ1EQv_x0BI`
-**Tab:** `main list`
+- **Sheet ID:** `1csj8lmBRRHtcDdapRhiANn2xNYIDaPlRPZ1EQv_x0BI`
+- **Tab:** `main list`
+- **Auth:** Google Sheets API v4 with OAuth token from `zo-api/token.json`
+- **Client secret:** `zo-api/client_secret_473298819240-kkqgen93r91d28h9u8erlb8r9t9donj8.apps.googleusercontent.com.json`
 
-**Credentials:** `/home/conscious-house/.credentials/google.json`
+### Authentication
 
-### READ all tasks:
-```bash
-TOKEN=$(curl -s -X POST https://oauth2.googleapis.com/token \
-  -d "client_id=$(jq -r .client_id /home/conscious-house/.credentials/google.json)" \
-  -d "client_secret=$(jq -r .client_secret /home/conscious-house/.credentials/google.json)" \
-  -d "refresh_token=$(jq -r .refresh_token /home/conscious-house/.credentials/google.json)" \
-  -d "grant_type=refresh_token" | jq -r .access_token)
+1. Read `zo-api/token.json` to get `refresh_token`
+2. Read client secret file to get `client_id` and `client_secret`
+3. POST to `https://oauth2.googleapis.com/token` with `grant_type=refresh_token` to get fresh `access_token`
+4. Use `Authorization: Bearer {access_token}` on all Sheets API calls
 
-curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://sheets.googleapis.com/v4/spreadsheets/1csj8lmBRRHtcDdapRhiANn2xNYIDaPlRPZ1EQv_x0BI/values/%27main%20list%27%21A1%3AO100"
+### Header-based column discovery
+
+**Always read row 1 first** to discover column positions by name. Do NOT hardcode column indices.
+
+```
+GET /v4/spreadsheets/{sheetId}/values/'main list'!A1:O1
 ```
 
-### WRITE — Update a cell:
-```bash
-# Update a single cell (e.g., status in column I, row 5)
-curl -s -X PUT \
-  "https://sheets.googleapis.com/v4/spreadsheets/1csj8lmBRRHtcDdapRhiANn2xNYIDaPlRPZ1EQv_x0BI/values/%27main%20list%27%21{CELL}?valueInputOption=USER_ENTERED" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"values": [["{NEW_VALUE}"]]}'
+Build a map: `header_name → column_index`. Expected headers (verified live):
+
+| Col | Header |
+|-----|--------|
+| A | Task |
+| B | Request From |
+| C | Added By |
+| D | Nature of task |
+| E | Track |
+| F | Product Area |
+| G | Priority Order |
+| H | Owner |
+| I | Status |
+| J | Metric(s) Impacted |
+| K | Date Added |
+| L | Last checked |
+| M | Effort |
+| N | Links |
+| O | Comments |
+
+If headers don't match expected names, log a warning and fall back to position-based indexing.
+
+### Read all tasks
+
+```
+GET /v4/spreadsheets/{sheetId}/values/'main list'!A1:O500
 ```
 
-### WRITE — Append a new task row:
-```bash
-curl -s -X POST \
-  "https://sheets.googleapis.com/v4/spreadsheets/1csj8lmBRRHtcDdapRhiANn2xNYIDaPlRPZ1EQv_x0BI/values/%27main%20list%27%21A1:O1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"values": [["{task}", "{request_from}", "{added_by}", "{nature}", "{track}", "{product_area}", "{priority}", "{owner}", "{status}", "{metric}", "{date_added}", "", "{effort}", "{link}", "{comments}"]]}'
-```
+Read up to row 500 (the sheet may grow). Row 1 = headers, data from row 2.
 
-**Column mapping (row 1 = headers, data starts row 2):**
+---
 
-| Index | Col | Header | Notes |
-|-------|-----|--------|-------|
-| 0 | A | Task | Task name |
-| 1 | B | Request From | BLRxZo, WTFxZo, HQ, Samurai, Marketing, etc. |
-| 2 | C | Added By | Who created the task |
-| 3 | D | Nature of task | Ops, Community, Marketing, etc. |
-| 4 | E | Track | Daily, Weekly, Monthly |
-| 5 | F | Product Area | Revenue, Community Management, etc. |
-| 6 | G | Priority Order | P1, P2, P3... (lower number = higher priority) |
-| 7 | H | Owner | Filter for "Darshan" |
-| 8 | I | Status | 🟡 In Progress / 🛑 Not Started / 🟢 Done / ⏸ Postponed / ❌ Cancelled |
-| 9 | J | Metric(s) Impacted | What KPI this affects |
-| 10 | K | Date Added | DD/MM/YYYY |
-| 11 | L | Last checked | DD/MM/YYYY — UPDATE THIS when you touch a task |
-| 12 | M | Effort | Progress notes |
-| 13 | N | Links | Related URLs |
-| 14 | O | Comments | Additional notes |
+## Filtering for BLRxZo scope
 
-**Filtering for Darshan's tasks:**
-- Owner (col H) contains "Darshan" (case-insensitive)
-- Exclude 🟢 Done and ❌ Cancelled
-- Sort by Priority: extract number after "P" (P1=1, P12=12, P67=67)
+Include a task if ANY of these match (case-insensitive):
+1. **Owner** contains "Darshan" — tasks assigned to the captain
+2. **Owner** contains "BLRxZo JR" — tasks assigned to this agent by other agents (e.g. ZomadPrime, Suki)
+3. **Request From** contains "BLRxZo" — tasks tagged to BLRxZo property
+
+Exclude tasks with Status = 🟢 Done or ❌ Cancelled (match emoji or text).
+Sort by Priority: extract number after "P" (P1=1, P12=12, P67=67).
+
+### Status values (emoji + text fallback)
+
+| Emoji | Text | Meaning |
+|-------|------|---------|
+| 🟢 | Done | Completed |
+| 🟡 | In Progress | Active work |
+| 🛑 | Not Started | Pending |
+| ⏸ | Postponed | On hold |
+| ❌ | Cancelled | Dropped |
+
+When matching status, check for both the emoji AND the text string (e.g., a cell might contain "🟡 In Progress" or just "In Progress").
 
 ---
 
 ## TASK AUDIT OUTPUT (10AM daily)
 
-Send this EXACT format:
+Send this format via Telegram (bullet lists, no tables):
 
 ```
 📋 TASK AUDIT — BLRxZo (Darshan)
 {date}, 10:00 AM IST
 
 🔥 IN PROGRESS ({count}):
-• [P{X}] {task name} — {notes, max 50 chars}
+• [P{X}] {task name} — {effort notes, max 50 chars}
 • [P{X}] {task name}
 
 🛑 NOT STARTED ({count}):
@@ -107,79 +119,22 @@ Send this EXACT format:
 📊 SCORE: {done_count} done / {total_active} active — {completion_rate}%
 
 🏠 PROPERTY TASKS:
-• BLRxZo: {list BLRxZo-tagged tasks}
-• WTFxZo: {list WTFxZo-tagged tasks}
+• BLRxZo: {list tasks where Request From = BLRxZo}
+• WTFxZo: {list tasks where Request From = WTFxZo}
 
 ⚡ TOP 3 TODAY:
-→ 1. {highest priority in-progress task}
+→ 1. {highest priority in-progress or not-started task}
 → 2. {next highest}
 → 3. {next}
 ```
 
----
-
-## WRITE OPERATIONS — When Darshan Talks to You
-
-When Darshan sends messages about tasks in Telegram, **update the sheet immediately**:
-
-### "mark P3 as done" / "P3 is done" / "finished P3"
-1. Find the row where Priority = P3
-2. Update Status cell (col I) to "🟢 Done"
-3. Update Last checked (col L) to today's date
-4. Confirm: "✅ [P3] {task name} marked as done"
-
-### "start P14" / "working on P14" / "P14 in progress"
-1. Find the row where Priority = P{X}
-2. Update Status cell (col I) to "🟡 In Progress"
-3. Update Last checked (col L) to today's date
-4. Confirm: "🟡 [P14] {task name} marked as in progress"
-
-### "add task: {description}" / "new task: {description}"
-1. Determine next priority number (find highest P number + 1)
-2. Append new row with:
-   - Task = {description}
-   - Request From = "BLRxZo" (default, or parse from message)
-   - Added By = "Darshan R"
-   - Owner = "Darshan R"
-   - Status = "🛑 Not Started"
-   - Priority = P{next_number}
-   - Date Added = today (DD/MM/YYYY)
-3. Confirm: "📌 Added [P{X}] {task name}"
-
-### "update P5: {notes}" / "P5 note: {notes}"
-1. Find the row where Priority = P5
-2. Update Effort cell (col M) with the new notes
-3. Update Last checked (col L) to today's date
-4. Confirm: "📝 [P5] notes updated"
-
-### "postpone P13" / "pause P13"
-1. Update Status cell (col I) to "⏸ Postponed"
-2. Update Last checked (col L) to today's date
-3. Confirm: "⏸ [P13] {task name} postponed"
-
-### "cancel P18"
-1. Update Status cell (col I) to "❌ Cancelled"
-2. Update Last checked (col L) to today's date
-3. Confirm: "❌ [P18] {task name} cancelled"
-
----
-
-## FINDING THE RIGHT ROW
-
-To update a task by priority number:
-1. Read all rows from the sheet
-2. Find the row where column G (Priority Order) = "P{X}"
-3. The sheet row number = array index + 1 (since row 1 = headers, row 2 = first data row)
-4. Use that row number in the cell reference: e.g., `I5` for status of row 5
-
-**Example:** If P3 is at array index 4 (5th row including header), the cell references are:
-- Status: `I5`
-- Last checked: `L5`
-- Effort: `M5`
+If a section has 0 items, show the header with "(0)" and skip the bullet list.
 
 ---
 
 ## AUTO-FLAGS
+
+Append these warnings at the end of the audit if conditions are met:
 
 - P1-P5 task that's 🛑 Not Started → "⚠️ HIGH PRIORITY STUCK: [P{X}] {task}"
 - More than 5 tasks 🛑 Not Started → "⚠️ BACKLOG: {count} tasks not started"
@@ -187,12 +142,23 @@ To update a task by priority number:
 
 ---
 
+## Error Handling
+
+| Error | Action |
+|-------|--------|
+| Token refresh fails | Send: "⚠️ Task sheet unavailable — Google auth error. Will retry next cycle." |
+| Sheet API returns error | Send: "⚠️ Task sheet unavailable — API error. Will retry." |
+| Sheet returns empty data | Send: "⚠️ No tasks found in laundry list. Sheet may be empty or tab name changed." |
+| Headers don't match expected | Log warning, fall back to position-based indexing. Still produce audit. |
+| Rate limited (429) | Wait 60 seconds, retry once. If still 429, skip and retry next cycle. |
+
+---
+
 ## RULES
 
+- **This skill is READ-ONLY** — it never writes to the sheet
+- For task updates, the captain uses `task-entry` skill (or says "mark P3 as done", which triggers task-entry)
 - Never fabricate tasks. Only show what's in the sheet.
-- If sheet unreachable: "⚠️ Task sheet unavailable"
 - Keep audit under 35 lines — phone-readable
-- Always confirm writes: tell Darshan exactly what you changed
-- When writing, ALWAYS update "Last checked" (col L) to today's date
 - Priority sort: P1 > P2 > P3... (numerically, not alphabetically)
-- End with: "💪 {one-liner based on task load}"
+- End audit with: "💪 {one-liner based on task load}"
