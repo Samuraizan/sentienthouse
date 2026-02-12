@@ -153,8 +153,8 @@ export default function AgentAvatar3D({
     >
       <Canvas
         camera={{
-          position: [0, 1, 5.5],
-          fov: 35,
+          position: [0, 0.8, 6.5],
+          fov: 30,
           near: 0.1,
           far: 100,
         }}

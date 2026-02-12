@@ -422,7 +422,7 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
   const graphWidth = selectedSkill ? dimensions.width - 320 : dimensions.width;
   const centerX = graphWidth / 2;
   const centerY = dimensions.height / 2;
-  const avatarSize = Math.min(graphWidth, dimensions.height) * 0.22;
+  const avatarSize = Math.min(graphWidth, dimensions.height) * 0.16;
   const radius = Math.min(graphWidth, dimensions.height) * 0.38;
 
   const nodePositions = useMemo(() => {
