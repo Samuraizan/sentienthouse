@@ -94,10 +94,10 @@ const RUN_SPEED = 6.0;
 const CROSSFADE_DURATION = 0.25;
 
 // ── Collision avoidance (Reynolds separation) ────────────────────
-const SEPARATION_RADIUS = 3.0;   // start steering away
-const SEPARATION_STRENGTH = 4.0; // force multiplier
-const MIN_SEPARATION = 1.5;      // hard minimum distance
-const IDLE_DRIFT_SPEED = 0.5;    // drift speed for stationary agents
+const SEPARATION_RADIUS = 8.0;   // start steering away (scaled for 7.5x characters)
+const SEPARATION_STRENGTH = 6.0; // force multiplier
+const MIN_SEPARATION = 5.0;      // hard minimum distance
+const IDLE_DRIFT_SPEED = 0.8;    // drift speed for stationary agents
 
 // LOKI nomad: deterministic clock-synced rotation
 const NOMAD_ZONES = ["hq", "blrxzo-house", "wtfxzo-house"];
@@ -606,13 +606,13 @@ function AgentCharacter({
   const pickNextActivity = useCallback(() => {
     const s = stateRef.current;
 
-    // 1. Offline → idle at home, face equipment
+    // 1. Offline → idle at home briefly, face equipment (short timer so agents wake up fast)
     if (status === "offline") {
       s.currentPos.copy(s.homePos);
       s.targetPos.copy(s.homePos);
       s.mode = "interacting";
       s.isMoving = false;
-      s.activityEndTime = Date.now() + 30000;
+      s.activityEndTime = Date.now() + 3000; // 3s — re-evaluate quickly when gateway data arrives
       s.targetRotation = Math.PI; // face -Z (toward screen/equipment)
       setCurrentMode("idle");
       setActivityText("Offline");
@@ -670,7 +670,7 @@ function AgentCharacter({
       s.targetPos.copy(s.homePos);
       s.mode = "interacting";
       s.isMoving = false;
-      s.activityEndTime = Date.now() + 30000;
+      s.activityEndTime = Date.now() + 8000; // 8s — brief standby before re-evaluating
       s.targetRotation = Math.PI; // face -Z (toward screen/equipment)
       setCurrentMode("idle");
       setActivityText("Standby mode");
@@ -820,9 +820,31 @@ function AgentCharacter({
           pickNextActivity();
         }
 
-        // ... (idle drift logic unchanged) ...
+        // Idle separation: push stationary agents apart if they overlap
         if (s.mode !== "celebrating") {
-          // ... existing drift logic ...
+          const others = getAllPositions();
+          let pushX = 0, pushZ = 0;
+          for (const otherId in others) {
+            if (otherId === agentId) continue;
+            const o = others[otherId];
+            const ddx = s.currentPos.x - o.x;
+            const ddz = s.currentPos.z - o.z;
+            const d = Math.sqrt(ddx * ddx + ddz * ddz);
+            if (d < SEPARATION_RADIUS && d > 0.01) {
+              const force = (SEPARATION_RADIUS - d) / SEPARATION_RADIUS;
+              pushX += (ddx / d) * force * SEPARATION_STRENGTH;
+              pushZ += (ddz / d) * force * SEPARATION_STRENGTH;
+              // Hard push if too close
+              if (d < MIN_SEPARATION) {
+                pushX += (ddx / d) * 3.0;
+                pushZ += (ddz / d) * 3.0;
+              }
+            }
+          }
+          if (Math.abs(pushX) > 0.01 || Math.abs(pushZ) > 0.01) {
+            s.currentPos.x += pushX * IDLE_DRIFT_SPEED * delta;
+            s.currentPos.z += pushZ * IDLE_DRIFT_SPEED * delta;
+          }
         }
         break;
 
@@ -886,9 +908,28 @@ function AgentCharacter({
             // Rotation looks at 2D target
             s.targetRotation = Math.atan2(dx, dz);
 
-            // Reynolds separation (only on flat ground/idle, lessen it on bridges to prevent falling off)
+            // Reynolds separation while moving (steer away from nearby agents)
             if (!s.waypoints || s.waypoints.length === 0) {
-              // ... existing reynolds logic ...
+              const others = getAllPositions();
+              let sepX = 0, sepZ = 0;
+              for (const otherId in others) {
+                if (otherId === agentId) continue;
+                const o = others[otherId];
+                const sdx = s.currentPos.x - o.x;
+                const sdz = s.currentPos.z - o.z;
+                const sd = Math.sqrt(sdx * sdx + sdz * sdz);
+                if (sd < SEPARATION_RADIUS && sd > 0.01) {
+                  const force = (SEPARATION_RADIUS - sd) / SEPARATION_RADIUS;
+                  sepX += (sdx / sd) * force * SEPARATION_STRENGTH;
+                  sepZ += (sdz / sd) * force * SEPARATION_STRENGTH;
+                  if (sd < MIN_SEPARATION) {
+                    sepX += (sdx / sd) * 4.0;
+                    sepZ += (sdz / sd) * 4.0;
+                  }
+                }
+              }
+              s.currentPos.x += sepX * delta;
+              s.currentPos.z += sepZ * delta;
             }
           }
         }
@@ -944,17 +985,17 @@ function AgentCharacter({
       <group ref={characterRef}>
         <primitive object={clonedScene} scale={[characterScale, characterScale, characterScale]} position={[0, 0, 0]} />
 
-        {/* Shadow */}
+        {/* Shadow — scaled with character */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>
-          <circleGeometry args={[0.7, 32]} />
+          <circleGeometry args={[2.0, 32]} />
           <meshBasicMaterial color="#000000" transparent opacity={0.4} depthWrite={false} />
         </mesh>
 
         {/* UI */}
         <Html
-          position={[0, 8, 0]}
+          position={[0, 16, 0]}
           center={true}
-          distanceFactor={15}
+          distanceFactor={28}
           occlude={false}
           style={{ pointerEvents: "none", userSelect: "none" }}
           zIndexRange={[100, 0]}
@@ -965,21 +1006,21 @@ function AgentCharacter({
             whiteSpace: "nowrap",
           }}>
             <div style={{
-              fontSize: "16px",
+              fontSize: "30px",
               fontWeight: 700,
               color: "#ffffff",
-              textShadow: "0 0 6px rgba(0,0,0,0.9), 0 2px 8px rgba(0,0,0,0.7)",
+              textShadow: "0 0 10px rgba(0,0,0,0.9), 0 3px 12px rgba(0,0,0,0.7)",
             }}>
               {agentName}
             </div>
             <div style={{
-              fontSize: "10px",
+              fontSize: "18px",
               fontWeight: 600,
               color: "#1a1a2e",
               background: agentColor,
-              padding: "2px 8px",
-              borderRadius: "10px",
-              marginTop: "3px",
+              padding: "4px 14px",
+              borderRadius: "14px",
+              marginTop: "5px",
               display: "inline-block",
               letterSpacing: "0.5px",
               textTransform: "uppercase",
@@ -988,22 +1029,22 @@ function AgentCharacter({
             </div>
             {activityText && (
               <div style={{
-                marginTop: "6px",
-                padding: "4px 10px",
+                marginTop: "8px",
+                padding: "6px 16px",
                 background: isWorking ? "rgba(34, 197, 94, 0.9)" :
                   isThinking ? "rgba(168, 85, 247, 0.9)" :
                     isInMeeting ? "rgba(59, 130, 246, 0.9)" :
                       isTraveling ? "rgba(251, 146, 60, 0.9)" :
                         isRoaming ? "rgba(255, 255, 255, 0.15)" :
                           "rgba(0, 0, 0, 0.7)",
-                borderRadius: "12px",
-                fontSize: isRoaming ? "10px" : "11px",
+                borderRadius: "16px",
+                fontSize: isRoaming ? "18px" : "20px",
                 fontWeight: isRoaming ? 400 : 600,
                 color: isRoaming ? "rgba(255,255,255,0.7)" : "#fff",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "4px",
+                gap: "6px",
                 boxShadow: isRoaming ? "none" : "0 2px 8px rgba(0,0,0,0.3)",
               }}>
                 <span>{activityEmoji}</span>
@@ -1013,13 +1054,13 @@ function AgentCharacter({
             {showCelebration && (
               <div style={{
                 position: "absolute",
-                top: "-40px",
+                top: "-60px",
                 left: "50%",
                 transform: "translateX(-50%)",
-                padding: "6px 14px",
+                padding: "8px 20px",
                 background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                borderRadius: "16px",
-                fontSize: "13px",
+                borderRadius: "20px",
+                fontSize: "22px",
                 fontWeight: 700,
                 color: "#1a1a2e",
                 boxShadow: "0 4px 12px rgba(251, 191, 36, 0.5)",
@@ -1029,8 +1070,8 @@ function AgentCharacter({
             )}
             {tasksCompleted > 0 && (
               <div style={{
-                marginTop: "4px",
-                fontSize: "9px",
+                marginTop: "6px",
+                fontSize: "15px",
                 color: "rgba(255,255,255,0.7)",
               }}>
                 ✨ {tasksCompleted} tasks today
