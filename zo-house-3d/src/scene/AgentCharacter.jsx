@@ -419,7 +419,7 @@ function AgentCharacter({
 
     // If driven by a live task, set activityEndTime far in the future —
     // the agent stays here until currentTask goes null (detected by useEffect).
-    // If no live task (fallback), use midpoint of duration range.
+    // If no live task (idle roaming), use shorter duration (8–18 seconds).
     const duration = currentTask
       ? 600 // 10 minutes max — task completion will interrupt before this
       : (interaction.duration[0] + interaction.duration[1]) / 2;
@@ -427,11 +427,16 @@ function AgentCharacter({
     s.mode = "interacting";
     s.activityEndTime = Date.now() + duration * 1000;
     s.isMoving = false;
-    s.workSessionsToday++;
 
-    setCurrentMode("working");
-    setActivityText(currentTask ? `Running: ${currentTask}` : interaction.activity);
-    setActivityEmoji(interaction.emoji);
+    // "working" mode = green badge (real tasks), "roaming" = subtle label (idle)
+    if (currentTask) {
+      setCurrentMode("working");
+      setActivityText(`Running: ${currentTask}`);
+      setActivityEmoji(interaction.emoji);
+    } else {
+      setCurrentMode("roaming");
+      // Activity text + emoji were already set by pickNextActivity idle roaming
+    }
 
     // Face towards zone center
     const zc = zoneCenter;
@@ -640,21 +645,45 @@ function AgentCharacter({
       }
     }
 
-    // 3. No task → go home, idle with status label
-    const statusLabels = {
-      active: "Processing...",
-      idle: "Awaiting tasks",
-      online: "Standing by",
-      standby: "Standby",
-      dormant: "Dormant",
-    };
-    s.targetPos.copy(s.homePos);
-    s.mode = "returning";
-    s.isMoving = true;
-    setCurrentMode("returning");
-    setActivityText(statusLabels[status] || "");
-    setActivityEmoji("");
-    startWalk();
+    // 3. No task → idle roaming around the zone
+    //    Agents cycle through interaction points deterministically so they
+    //    look alive even when no cron job is active.
+    if (status === "dormant") {
+      // Dormant agents just stand at home
+      s.targetPos.copy(s.homePos);
+      s.mode = "returning";
+      s.isMoving = true;
+      setCurrentMode("returning");
+      setActivityText("Dormant");
+      setActivityEmoji("");
+      startWalk();
+      return;
+    }
+
+    const zoneInteractions = ZONE_INTERACTIONS[currentZoneKeyRef.current] || ZONE_INTERACTIONS.hq;
+    if (zoneInteractions.length === 0) return;
+
+    // Deterministic index: hash agentId + a slowly incrementing counter
+    // Each agent gets a different sequence, cycling every 15–25 seconds
+    const idHash = agentId.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+    s.workSessionsToday = (s.workSessionsToday || 0) + 1;
+    const roamIndex = (idHash + s.workSessionsToday) % zoneInteractions.length;
+    const roamTarget = zoneInteractions[roamIndex];
+
+    // Subtle idle activities when not running a real task
+    const IDLE_ACTIVITIES = [
+      { text: "Checking notes", emoji: "📝" },
+      { text: "Looking around", emoji: "👀" },
+      { text: "Reviewing data", emoji: "📊" },
+      { text: "Quick stretch", emoji: "🧘" },
+      { text: "Thinking...", emoji: "💭" },
+      { text: "Reading updates", emoji: "📱" },
+    ];
+    const idleActivity = IDLE_ACTIVITIES[(idHash + s.workSessionsToday) % IDLE_ACTIVITIES.length];
+
+    goToInteraction(roamTarget);
+    setActivityText(idleActivity.text);
+    setActivityEmoji(idleActivity.emoji);
   }, [status, currentTask, goToInteraction, startWalk]);
 
   // ── Initialize ───────────────────────────────────────────────────
@@ -869,6 +898,7 @@ function AgentCharacter({
   const isTraveling = currentMode === "traveling" || currentMode === "returning";
   const isInMeeting = currentMode === "meeting";
   const isWorking = currentMode === "working";
+  const isRoaming = currentMode === "roaming" || currentMode === "walking";
   const isThinking = currentMode === "thinking";
 
   return (
@@ -932,16 +962,17 @@ function AgentCharacter({
                   isThinking ? "rgba(168, 85, 247, 0.9)" :
                     isInMeeting ? "rgba(59, 130, 246, 0.9)" :
                       isTraveling ? "rgba(251, 146, 60, 0.9)" :
-                        "rgba(0, 0, 0, 0.7)",
+                        isRoaming ? "rgba(255, 255, 255, 0.15)" :
+                          "rgba(0, 0, 0, 0.7)",
                 borderRadius: "12px",
-                fontSize: "11px",
-                fontWeight: 600,
-                color: "#fff",
+                fontSize: isRoaming ? "10px" : "11px",
+                fontWeight: isRoaming ? 400 : 600,
+                color: isRoaming ? "rgba(255,255,255,0.7)" : "#fff",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "4px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                boxShadow: isRoaming ? "none" : "0 2px 8px rgba(0,0,0,0.3)",
               }}>
                 <span>{activityEmoji}</span>
                 <span>{activityText}</span>

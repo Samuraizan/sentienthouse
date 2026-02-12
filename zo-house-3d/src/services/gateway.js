@@ -116,7 +116,7 @@ function findCurrentTask(agentId, cronJobs) {
   if (!cronJobs || cronJobs.length === 0) return null;
 
   const now = Date.now();
-  const RECENCY_WINDOW = 20 * 60 * 1000; // 20 minutes
+  const RECENCY_WINDOW = 30 * 60 * 1000; // 30 minutes — matches typical cron cycle
 
   // Check cron jobs that belong to this agent and ran recently
   for (const job of cronJobs) {
