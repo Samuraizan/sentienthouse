@@ -138,70 +138,13 @@ export default function ZonePlatform({
     }
   });
 
-  const handleClick = (e) => {
-    e.stopPropagation();
-    if (onClick) onClick(agentId);
-  };
-
   const isActive = status === "active" || status === "online";
 
   return (
-    <group ref={groupRef} position={position} onClick={handleClick}>
-      {/* Raised rectangular floor plate */}
-      <mesh receiveShadow position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[size[0], size[1]]} />
-        <meshStandardMaterial
-          ref={fillRef}
-          color={threeColor}
-          transparent
-          opacity={0.06}
-          roughness={0.8}
-          metalness={0.2}
-          emissive={threeColor}
-          emissiveIntensity={0.1}
-          side={THREE.DoubleSide}
-          depthWrite={false}
-        />
-      </mesh>
-
-      {/* Slightly raised border fill — gives depth to the platform */}
-      <mesh receiveShadow position={[0, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[size[0] - 0.1, size[1] - 0.1]} />
-        <meshStandardMaterial
-          color="#1e1c24"
-          roughness={0.7}
-          metalness={0.3}
-          emissive={threeColor}
-          emissiveIntensity={0.03}
-        />
-      </mesh>
-
-      {/* Thin outline border — warm orange */}
-      <line geometry={borderGeometry}>
-        <lineBasicMaterial
-          ref={borderRef}
-          color={isActive ? color : "#ff7744"}
-          transparent
-          opacity={0.6}
-          depthWrite={false}
-        />
-      </line>
-
-      {/* Corner accents — brighter, thicker feel */}
-      {cornerGeometries.map((geo, i) => (
-        <line key={i} geometry={geo}>
-          <lineBasicMaterial
-            color={color}
-            transparent
-            opacity={0.9}
-            depthWrite={false}
-          />
-        </line>
-      ))}
-
+    <group ref={groupRef} position={position}>
       {/* Department zone label — floating above using Html billboard */}
       <Html
-        position={[0, 0.5, 0]}
+        position={[0, 2.5, 0]} // Raised slightly higher to clear voxels
         center
         distanceFactor={20}
         occlude={false}
@@ -228,8 +171,8 @@ export default function ZonePlatform({
       </Html>
 
       {/* Status indicator — small dot at front of zone */}
-      <mesh position={[0, 0.2, size[1] / 2 - 0.3]}>
-        <sphereGeometry args={[0.1, 12, 12]} />
+      <mesh position={[0, 1.2, size[1] / 2 - 2]}>
+        <sphereGeometry args={[0.3, 12, 12]} />
         <meshStandardMaterial
           color={isActive ? "#22ff66" : status === "idle" ? "#ffcc22" : "#555555"}
           emissive={isActive ? new THREE.Color("#22ff66") : new THREE.Color("#333333")}
@@ -241,7 +184,7 @@ export default function ZonePlatform({
 
       {/* Subtle point light under zone — warmer tint */}
       <pointLight
-        position={[0, 0.3, 0]}
+        position={[0, 2.0, 0]}
         color={isActive ? color : "#ffaa77"}
         intensity={isActive ? 1.5 : 0.4}
         distance={size[0] + 2}

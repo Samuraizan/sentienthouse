@@ -744,7 +744,19 @@ function AgentCharacter({
     return () => { document.body.style.cursor = "auto"; };
   }, [hovered]);
 
+  // Track pointer down position to distinguish clicks from drags
+  const pointerDownPos = useRef(null);
+  const handlePointerDown = useCallback((e) => {
+    pointerDownPos.current = { x: e.clientX, y: e.clientY };
+  }, []);
+
   const handleClick = useCallback((e) => {
+    // Only select if pointer didn't move much (i.e. a real click, not a drag)
+    if (pointerDownPos.current) {
+      const dx = e.clientX - pointerDownPos.current.x;
+      const dy = e.clientY - pointerDownPos.current.y;
+      if (Math.sqrt(dx * dx + dy * dy) > 5) return; // Was a drag, ignore
+    }
     e.stopPropagation();
     if (onSelect) onSelect(agentId);
   }, [onSelect, agentId]);
@@ -905,9 +917,10 @@ function AgentCharacter({
     <group
       ref={groupRef}
       position={position}
+      onPointerDown={handlePointerDown}
       onClick={handleClick}
-      onPointerEnter={(e) => { e.stopPropagation(); setHovered(true); }}
-      onPointerLeave={() => setHovered(false)}
+      onPointerOver={(e) => { setHovered(true); }}
+      onPointerOut={() => setHovered(false)}
     >
       <group ref={characterRef}>
         <primitive object={clonedScene} scale={[2.5, 2.5, 2.5]} position={[0, 0, 0]} />

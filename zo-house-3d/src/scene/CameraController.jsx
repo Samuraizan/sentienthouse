@@ -131,18 +131,19 @@ export default function CameraController() {
   return (
     <OrbitControls
       ref={controlsRef}
-      minPolarAngle={Math.PI / 8}
-      maxPolarAngle={Math.PI / 2.2}
+      minPolarAngle={0.2}
+      maxPolarAngle={Math.PI / 2.15}
       minDistance={8}
-      maxDistance={250}
+      maxDistance={300}
       enablePan={true}
       enableZoom={true}
       enableRotate={true}
-      panSpeed={1.0}
-      rotateSpeed={0.6}
-      zoomSpeed={1.2}
+      screenSpacePanning={true}
+      panSpeed={1.5}
+      rotateSpeed={0.7}
+      zoomSpeed={1.5}
       enableDamping={true}
-      dampingFactor={0.08}
+      dampingFactor={0.12}
       touches={{
         ONE: THREE.TOUCH.ROTATE,
         TWO: THREE.TOUCH.DOLLY_PAN,
@@ -153,6 +154,7 @@ export default function CameraController() {
         RIGHT: THREE.MOUSE.PAN,
       }}
       target={[0, 0, 0]}
+      makeDefault
     />
   );
 }
