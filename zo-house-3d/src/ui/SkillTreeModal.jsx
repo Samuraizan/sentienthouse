@@ -168,7 +168,7 @@ function TabGeneral({ agent }) {
   );
 }
 
-function TabSkills({ agent, onRunSkill }) {
+function TabSkills({ agent }) {
   return (
     <div className="stm-tab-content stm-tab-skills">
       <div className="stm-skills-graph-container">
@@ -176,7 +176,6 @@ function TabSkills({ agent, onRunSkill }) {
           agentId={agent.id}
           agentColor={agent.color}
           agentName={agent.name}
-          onRunSkill={onRunSkill}
         />
       </div>
     </div>
@@ -300,9 +299,6 @@ export default function SkillTreeModal() {
   const [visible, setVisible] = useState(false);
   const [rendered, setRendered] = useState(false);
   const [activeTab, setActiveTab] = useState("skills"); // Default to skills tab
-  const [skillResult, setSkillResult] = useState(null);
-  const [skillError, setSkillError] = useState(null);
-
   const agent = useMemo(() => {
     if (!skillTreeAgentId) return null;
     return agents.find((a) => a.id === skillTreeAgentId) || null;
@@ -312,8 +308,6 @@ export default function SkillTreeModal() {
   useEffect(() => {
     if (skillTreeAgentId) {
       setRendered(true);
-      setSkillResult(null);
-      setSkillError(null);
       setActiveTab("skills"); // Reset to skills tab when opening
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setVisible(true));
@@ -340,27 +334,6 @@ export default function SkillTreeModal() {
       if (e.target === e.currentTarget) closeSkillTree();
     },
     [closeSkillTree]
-  );
-
-  const handleRunSkill = useCallback(
-    async (skillName) => {
-      if (!skillTreeAgentId) return;
-      setSkillResult(null);
-      setSkillError(null);
-
-      try {
-        const res = await fetch(
-          `${API_BASE}/api/manage/agents/${skillTreeAgentId}/skill/${skillName}`,
-          { method: "POST", headers: { "Content-Type": "application/json" } }
-        );
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-        setSkillResult({ skill: skillName, data });
-      } catch (err) {
-        setSkillError({ skill: skillName, message: err.message });
-      }
-    },
-    [skillTreeAgentId]
   );
 
   if (!rendered) return null;
@@ -395,7 +368,7 @@ export default function SkillTreeModal() {
           {agent && (
             <>
               {activeTab === "general" && <TabGeneral agent={agent} />}
-              {activeTab === "skills" && <TabSkills agent={agent} onRunSkill={handleRunSkill} />}
+              {activeTab === "skills" && <TabSkills agent={agent} />}
               {activeTab === "workspace" && <TabWorkspace agent={agent} />}
               {activeTab === "advanced" && <TabAdvanced agent={agent} />}
             </>
@@ -413,21 +386,6 @@ export default function SkillTreeModal() {
           </button>
         </div>
 
-        {/* Toast notifications */}
-        {skillResult && (
-          <div className="stm-toast stm-toast--success">
-            <span className="stm-toast__icon">✓</span>
-            <span>{skillResult.skill} completed</span>
-          </div>
-        )}
-        {skillError && (
-          <div className="stm-toast stm-toast--error">
-            <span className="stm-toast__icon">✗</span>
-            <span>
-              {skillError.skill}: {skillError.message}
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );

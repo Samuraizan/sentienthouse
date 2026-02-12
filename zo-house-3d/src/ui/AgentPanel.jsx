@@ -227,31 +227,7 @@ function TabGeneral({ agent, cronJobs }) {
 }
 
 function TabSkills({ agent }) {
-  const [runningSkill, setRunningSkill] = useState(null);
-  const [skillResult, setSkillResult] = useState(null);
-  const [skillError, setSkillError] = useState(null);
   const openSkillTree = useAgentStore((s) => s.openSkillTree);
-
-  const handleRunSkill = async (skillName) => {
-    setRunningSkill(skillName);
-    setSkillResult(null);
-    setSkillError(null);
-
-    try {
-      const res = await fetch(
-        `${API_BASE}/api/manage/agents/${agent.id}/skill/${skillName}`,
-        { method: "POST", headers: { "Content-Type": "application/json" } }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-      setSkillResult({ skill: skillName, data });
-    } catch (err) {
-      setSkillError({ skill: skillName, message: err.message });
-    } finally {
-      setRunningSkill(null);
-    }
-  };
-
   const skills = agent.skills || [];
 
   return (
@@ -272,7 +248,6 @@ function TabSkills({ agent }) {
             agentId={agent.id}
             agentColor={agent.color}
             agentName={agent.name}
-            onRunSkill={handleRunSkill}
           />
         </div>
       </div>
@@ -296,53 +271,17 @@ function TabSkills({ agent }) {
                   {SKILL_DESCRIPTIONS[skill] || "Agent skill"}
                 </span>
               </div>
-              <button
-                className="ap-skill-card__run-btn"
-                disabled={runningSkill === skill}
-                onClick={() => handleRunSkill(skill)}
-              >
-                {runningSkill === skill ? (
-                  <span className="ap-spinner" />
-                ) : (
-                  "\u25B6"
-                )}
-              </button>
+              {/* View-only — skills run via Telegram */}
             </div>
           ))}
         </div>
 
-        {/* Result display */}
-        {skillResult && (
-          <div className="ap-result ap-result--success">
-            <div className="ap-result__header">
-              <span className="ap-result__icon">&#10003;</span>
-              <span className="ap-result__title">{skillResult.skill} completed</span>
-            </div>
-            <pre className="ap-result__body">
-              {JSON.stringify(skillResult.data, null, 2)}
-            </pre>
-          </div>
-        )}
-
-        {skillError && (
-          <div className="ap-result ap-result--error">
-            <div className="ap-result__header">
-              <span className="ap-result__icon">&#10007;</span>
-              <span className="ap-result__title">{skillError.skill} failed</span>
-            </div>
-            <pre className="ap-result__body">{skillError.message}</pre>
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
 function TabCron({ agent, cronJobs }) {
-  const [runningJob, setRunningJob] = useState(null);
-  const [jobResult, setJobResult] = useState(null);
-  const [jobError, setJobError] = useState(null);
-
   const agentCronJobs = useMemo(() => {
     return cronJobs.filter((j) => j.agent === agent.id);
   }, [agent, cronJobs]);
@@ -353,26 +292,6 @@ function TabCron({ agent, cronJobs }) {
     const timer = setInterval(() => setTick((t) => t + 1), 30000);
     return () => clearInterval(timer);
   }, []);
-
-  const handleForceRun = async (jobId) => {
-    setRunningJob(jobId);
-    setJobResult(null);
-    setJobError(null);
-
-    try {
-      const res = await fetch(
-        `${API_BASE}/api/manage/agents/${agent.id}/cron/${jobId}/run`,
-        { method: "POST", headers: { "Content-Type": "application/json" } }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-      setJobResult({ jobId, data });
-    } catch (err) {
-      setJobError({ jobId, message: err.message });
-    } finally {
-      setRunningJob(null);
-    }
-  };
 
   return (
     <div className="ap-tab-content">
@@ -394,18 +313,7 @@ function TabCron({ agent, cronJobs }) {
                   <span className="ap-cron-card__name">{job.name}</span>
                   <span className="ap-cron-card__schedule">{job.schedule}</span>
                 </div>
-                <button
-                  className="ap-cron-card__run-btn"
-                  disabled={runningJob === job.id}
-                  onClick={() => handleForceRun(job.id)}
-                  title="Force run this job"
-                >
-                  {runningJob === job.id ? (
-                    <span className="ap-spinner" />
-                  ) : (
-                    "\u25B6"
-                  )}
-                </button>
+                {/* View-only — cron jobs run automatically */}
               </div>
               <div className="ap-cron-card__meta">
                 <div className="ap-cron-card__meta-item">
@@ -438,28 +346,6 @@ function TabCron({ agent, cronJobs }) {
           ))}
         </div>
 
-        {/* Result display */}
-        {jobResult && (
-          <div className="ap-result ap-result--success">
-            <div className="ap-result__header">
-              <span className="ap-result__icon">&#10003;</span>
-              <span className="ap-result__title">Job triggered</span>
-            </div>
-            <pre className="ap-result__body">
-              {JSON.stringify(jobResult.data, null, 2)}
-            </pre>
-          </div>
-        )}
-
-        {jobError && (
-          <div className="ap-result ap-result--error">
-            <div className="ap-result__header">
-              <span className="ap-result__icon">&#10007;</span>
-              <span className="ap-result__title">Job failed</span>
-            </div>
-            <pre className="ap-result__body">{jobError.message}</pre>
-          </div>
-        )}
       </div>
     </div>
   );

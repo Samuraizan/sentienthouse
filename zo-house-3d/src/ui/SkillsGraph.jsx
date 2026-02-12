@@ -175,7 +175,7 @@ function SkillNode({ skill, x, y, index, agentColor, isSelected, onSelect }) {
 /**
  * Skill detail panel showing full information
  */
-function SkillDetailPanel({ skill, agentColor, onClose, onRun }) {
+function SkillDetailPanel({ skill, agentColor, onClose }) {
   if (!skill) return null;
 
   const categoryColor = CATEGORY_COLORS[skill.category] || agentColor;
@@ -339,28 +339,7 @@ function SkillDetailPanel({ skill, agentColor, onClose, onRun }) {
         </div>
       )}
 
-      {/* Run button */}
-      <button
-        onClick={() => onRun(skill.name)}
-        style={{
-          width: "100%",
-          padding: "12px",
-          background: `linear-gradient(135deg, ${categoryColor}90 0%, ${categoryColor}60 100%)`,
-          border: "none",
-          borderRadius: "10px",
-          color: "#fff",
-          fontSize: "13px",
-          fontWeight: 600,
-          cursor: "pointer",
-          fontFamily: "Inter, -apple-system, sans-serif",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "8px",
-        }}
-      >
-        ⚡ Run Skill
-      </button>
+      {/* Skill execution happens via Telegram, not web UI */}
     </div>
   );
 }
@@ -368,7 +347,7 @@ function SkillDetailPanel({ skill, agentColor, onClose, onRun }) {
 /**
  * Main SkillsGraph component.
  */
-export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill }) {
+export default function SkillsGraph({ agentId, agentColor, agentName }) {
   const agent = useAgentStore((s) => s.agents.find((a) => a.id === agentId));
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -432,17 +411,6 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
   const handleSelectSkill = useCallback((skill) => {
     setSelectedSkill((prev) => (prev?.id === skill.id ? null : skill));
   }, []);
-
-  const handleTriggerSkill = useCallback(
-    (skillName) => {
-      if (onRunSkill) {
-        onRunSkill(skillName);
-      } else {
-        console.log(`[SkillsGraph] Trigger skill: ${skillName} for agent: ${agentId}`);
-      }
-    },
-    [agentId, onRunSkill]
-  );
 
   if (loading) {
     return (
@@ -645,7 +613,6 @@ export default function SkillsGraph({ agentId, agentColor, agentName, onRunSkill
         skill={selectedSkill}
         agentColor={color}
         onClose={() => setSelectedSkill(null)}
-        onRun={handleTriggerSkill}
       />
 
       {/* Click-to-select hint */}
