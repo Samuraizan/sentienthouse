@@ -4,21 +4,15 @@ import { useFrame } from "@react-three/fiber";
 import { useGLTF, useAnimations, Html } from "@react-three/drei";
 import * as THREE from "three";
 import useAgentStore from "../store/agentStore";
+import { ZONE_POSITIONS } from "./Zones";
 
 /**
- * AgentCharacter.jsx — Sentient AI agent with natural workspace interactions
+ * AgentCharacter.jsx — Sentient AI agent with zone-aware workspace interactions
  *
- * Agents interact with objects in their zone, wander naturally, and visit
- * other agents for work-related collaboration.
+ * 3-zone model: agents interact with objects in their zone, wander naturally,
+ * and visit other zones for work-related collaboration.
  *
- * Behaviors:
- *   - 💻 Working at desk/station
- *   - 🎵 Using zone-specific equipment (turntable, presentation board, etc.)
- *   - 🤔 Thinking/planning
- *   - 🚶 Walking around zone
- *   - 🏃 Visiting other agents
- *   - 💬 Collaborating in meetings
- *   - 🎉 Celebrating completions
+ * LOKI (nomad) rotates between all 3 zones every 60-120s.
  */
 
 // ── Animation helpers ──────────────────────────────────────────────
@@ -39,107 +33,48 @@ const INTERACT_ANIMS = ["Interact", "PickUp"];
 const CHEER_ANIMS = ["Cheer", "Jump"];
 
 // ── Zone-specific interaction points ───────────────────────────────
-// Aligned with actual furniture positions in ZoneDecorations.jsx
+// Offsets are from ZONE CENTER, aligned with ZoneDecorations furniture
 const ZONE_INTERACTIONS = {
-  director: [
-    { id: "desk", offset: [0, 0, -8], activity: "Reviewing strategy", emoji: "💻", duration: [12, 20] },
-    { id: "display", offset: [0, 0, -12], activity: "Checking analytics", emoji: "📊", duration: [8, 15] },
-    { id: "seating", offset: [8, 0, 5], activity: "Taking calls", emoji: "📞", duration: [6, 12] },
-    { id: "filing1", offset: [-8, 0, -10], activity: "Reviewing documents", emoji: "📁", duration: [5, 10] },
-    { id: "plant", offset: [-10, 0, 8], activity: "Brief pause", emoji: "🌿", duration: [2, 5] },
+  hq: [
+    { id: "command-desk", offset: [0, 0, -10], activity: "Reviewing strategy", emoji: "💻", duration: [12, 20] },
+    { id: "display-wall", offset: [0, 0, -12], activity: "Checking analytics", emoji: "📊", duration: [8, 15] },
+    { id: "suki-desk", offset: [-10, 0, 5], activity: "Event coordination", emoji: "📝", duration: [10, 18] },
+    { id: "wanda-desk", offset: [10, 0, 5], activity: "Sales pipeline review", emoji: "📈", duration: [10, 18] },
+    { id: "yana-desk", offset: [-10, 0, -5], activity: "BD research", emoji: "🌍", duration: [10, 18] },
+    { id: "conference", offset: [0, 0, 10], activity: "Team meeting", emoji: "🤝", duration: [10, 18] },
+    { id: "lounge", offset: [12, 0, -5], activity: "Taking calls", emoji: "📞", duration: [6, 12] },
+    { id: "whiteboard", offset: [15, 0, 5], activity: "Strategy planning", emoji: "📋", duration: [8, 15] },
+    { id: "plant-break", offset: [-15, 0, 12], activity: "Brief pause", emoji: "🌿", duration: [2, 5] },
   ],
-  "captain-blrxzo": [
-    { id: "desk", offset: [0, 0, -6], activity: "Managing Bangalore ops", emoji: "💻", duration: [12, 20] },
+  "blrxzo-house": [
+    { id: "desk", offset: [0, 0, -8], activity: "Managing Bangalore ops", emoji: "💻", duration: [12, 20] },
     { id: "checkin", offset: [8, 0, 0], activity: "Guest check-in", emoji: "🔑", duration: [5, 10] },
-    { id: "welcome", offset: [0, 0, 8], activity: "Greeting guests", emoji: "👋", duration: [4, 8] },
-    { id: "waiting", offset: [-6, 0, 6], activity: "Guest consultation", emoji: "💬", duration: [8, 15] },
-    { id: "board", offset: [0, 0, -10], activity: "Updating property status", emoji: "📋", duration: [6, 12] },
+    { id: "common-sofa", offset: [-6, 0, 6], activity: "Guest consultation", emoji: "💬", duration: [8, 15] },
+    { id: "kitchen", offset: [-8, 0, -2], activity: "Kitchen break", emoji: "☕", duration: [4, 8] },
+    { id: "ops-board", offset: [0, 0, -10], activity: "Updating property status", emoji: "📋", duration: [6, 12] },
+    { id: "welcome", offset: [0, 0, 10], activity: "Greeting guests", emoji: "👋", duration: [4, 8] },
   ],
-  "captain-wtfxzo": [
-    { id: "desk", offset: [0, 0, -6], activity: "Managing Goa ops", emoji: "💻", duration: [12, 20] },
-    { id: "checkin", offset: [8, 0, 0], activity: "Guest check-in", emoji: "🔑", duration: [5, 10] },
-    { id: "welcome", offset: [0, 0, 8], activity: "Greeting arrivals", emoji: "👋", duration: [4, 8] },
-    { id: "waiting", offset: [-6, 0, 6], activity: "Discussing bookings", emoji: "💬", duration: [8, 15] },
-    { id: "board", offset: [0, 0, -10], activity: "Property walkthrough", emoji: "🚶", duration: [6, 12] },
-  ],
-  events: [
-    { id: "desk", offset: [-6, 0, 0], activity: "Planning event details", emoji: "📝", duration: [10, 18] },
-    { id: "stage", offset: [0, 0, -6], activity: "Checking stage setup", emoji: "🎪", duration: [8, 15] },
-    { id: "avrack", offset: [10, 0, -5], activity: "Adjusting AV equipment", emoji: "🎛️", duration: [6, 12] },
-    { id: "meeting", offset: [5, 0, 8], activity: "Client consultation", emoji: "🤝", duration: [10, 18] },
-    { id: "speakers", offset: [-5, 0, -4], activity: "Sound check", emoji: "🔊", duration: [5, 10] },
-  ],
-  "vibe-curator": [
-    { id: "djbooth", offset: [0, 0, -4], activity: "Mixing tracks", emoji: "🎧", duration: [15, 25] },
-    { id: "monitors", offset: [-6, 0, -6], activity: "Adjusting sound levels", emoji: "🔊", duration: [6, 12] },
-    { id: "vinyl", offset: [-10, 0, 0], activity: "Selecting records", emoji: "💿", duration: [5, 10] },
-    { id: "laptop", offset: [1, 0, -4], activity: "Curating playlist", emoji: "📱", duration: [8, 15] },
-    { id: "chill", offset: [8, 0, 5], activity: "Vibing out", emoji: "✨", duration: [4, 8] },
-  ],
-  sales: [
-    { id: "desk", offset: [0, 0, -6], activity: "Following up leads", emoji: "💻", duration: [12, 20] },
-    { id: "board", offset: [0, 0, -10], activity: "Updating pipeline", emoji: "📈", duration: [8, 15] },
-    { id: "desk2", offset: [-8, 0, 2], activity: "Preparing proposals", emoji: "📧", duration: [10, 18] },
-    { id: "callbooth", offset: [10, 0, 2], activity: "Sales call", emoji: "📞", duration: [8, 15] },
-    { id: "meeting", offset: [-6, 0, 10], activity: "Deal discussion", emoji: "🤝", duration: [10, 18] },
-  ],
-  bd: [
-    { id: "conference", offset: [0, 0, 0], activity: "Partnership meeting", emoji: "🤝", duration: [12, 20] },
-    { id: "presentation", offset: [0, 0, -8], activity: "Presenting pitch", emoji: "📊", duration: [10, 18] },
-    { id: "research", offset: [-8, 0, -5], activity: "Market research", emoji: "🌍", duration: [10, 18] },
-    { id: "dealboard", offset: [10, 0, 0], activity: "Deal analysis", emoji: "📋", duration: [8, 15] },
-    { id: "lounge", offset: [6, 0, 8], activity: "Networking chat", emoji: "☕", duration: [6, 12] },
+  "wtfxzo-house": [
+    { id: "desk", offset: [0, 0, -8], activity: "Managing Goa ops", emoji: "💻", duration: [12, 20] },
+    { id: "checkin", offset: [-8, 0, 0], activity: "Guest check-in", emoji: "🔑", duration: [5, 10] },
+    { id: "common-sofa", offset: [6, 0, 6], activity: "Discussing bookings", emoji: "💬", duration: [8, 15] },
+    { id: "kitchen", offset: [8, 0, -2], activity: "Kitchen break", emoji: "☕", duration: [4, 8] },
+    { id: "ops-board", offset: [0, 0, -10], activity: "Property walkthrough", emoji: "📋", duration: [6, 12] },
+    { id: "welcome", offset: [0, 0, 10], activity: "Greeting arrivals", emoji: "👋", duration: [4, 8] },
   ],
 };
 
-// ── Work-related visit reasons ─────────────────────────────────────
+// ── Visit reasons — agents visit ZONES for work ───────────────────
 const VISIT_REASONS = {
-  director: {
-    "captain-blrxzo": ["Bangalore status update", "Property metrics review", "Guest feedback"],
-    "captain-wtfxzo": ["Goa status update", "House performance check", "Staff coordination"],
-    events: ["Event calendar sync", "Venue requirements", "Budget approval"],
-    "vibe-curator": ["Atmosphere check", "Music curation review", "Guest experience"],
-    sales: ["Pipeline review", "Revenue targets", "Lead quality check"],
-    bd: ["Partnership updates", "Deal pipeline", "Strategic planning"],
-  },
-  "captain-blrxzo": {
-    director: ["Reporting metrics", "Escalation", "Resource request"],
-    events: ["Event coordination", "Space booking", "Setup planning"],
-    "vibe-curator": ["Atmosphere request", "Music for event", "Guest preferences"],
-    sales: ["Lead handoff", "Guest inquiry", "Booking confirmation"],
-  },
-  "captain-wtfxzo": {
-    director: ["Reporting metrics", "Escalation", "Approval needed"],
-    events: ["Event coordination", "Venue prep", "Catering sync"],
-    "vibe-curator": ["Vibe check", "Party planning", "Music selection"],
-    sales: ["Guest leads", "Inquiry response", "Booking update"],
-  },
-  events: {
-    director: ["Event approval", "Budget review", "Schedule confirmation"],
-    "captain-blrxzo": ["Venue walkthrough", "Setup coordination", "Timing sync"],
-    "captain-wtfxzo": ["Space requirements", "Equipment needs", "Staff briefing"],
-    "vibe-curator": ["Music planning", "Atmosphere design", "Theme coordination"],
-    sales: ["Event leads", "Corporate inquiries", "Package details"],
-    bd: ["Partner events", "Sponsorship", "Co-hosted events"],
-  },
-  "vibe-curator": {
-    director: ["Creative direction", "Brand alignment", "Feedback session"],
-    events: ["Event playlist", "Sound setup", "Lighting design"],
-    "captain-blrxzo": ["House vibes", "Guest playlist", "Atmosphere update"],
-    "captain-wtfxzo": ["Party prep", "Music schedule", "Mood setting"],
-  },
-  sales: {
-    director: ["Pipeline review", "Target updates", "Deal support"],
-    events: ["Event packages", "Corporate leads", "Booking coordination"],
-    bd: ["Partner leads", "Cross-sell opps", "Deal collaboration"],
-    "captain-blrxzo": ["Guest inquiries", "Availability check", "Special requests"],
-    "captain-wtfxzo": ["Booking requests", "Rate discussion", "Promo coordination"],
-  },
-  bd: {
-    director: ["Deal approval", "Partnership strategy", "Resource allocation"],
-    events: ["Partner events", "Sponsorship deals", "Co-marketing"],
-    sales: ["Lead sharing", "Deal support", "Pipeline sync"],
-  },
+  // From HQ to houses
+  "hq->blrxzo-house": ["Bangalore status update", "Property metrics review", "Guest feedback", "Ops check"],
+  "hq->wtfxzo-house": ["Goa status update", "House performance check", "Staff coordination", "Ops check"],
+  // From houses to HQ
+  "blrxzo-house->hq": ["Reporting metrics", "Escalation", "Resource request", "Team sync"],
+  "wtfxzo-house->hq": ["Reporting metrics", "Approval needed", "Escalation", "Team sync"],
+  // Between houses
+  "blrxzo-house->wtfxzo-house": ["Cross-property coordination", "Best practices sharing"],
+  "wtfxzo-house->blrxzo-house": ["Cross-property coordination", "Guest transfer"],
 };
 
 // ── Status activity levels ─────────────────────────────────────────
@@ -156,18 +91,25 @@ const WALK_SPEED = 2.5;
 const RUN_SPEED = 6.0;
 const CROSSFADE_DURATION = 0.25;
 
+// LOKI nomad timing
+const NOMAD_MIN_MS = 60000;
+const NOMAD_MAX_MS = 120000;
+
 // ── Main Component ─────────────────────────────────────────────────
 
 function AgentCharacter({
   modelPath,
   position = [0, 0, 0],
   zoneSize = [10, 10],
+  zoneKey = "hq",
+  zoneCenter = [0, 0, 0],
   color = null,
   status = "offline",
   agentId = "",
   agentName = "",
   agentRole = "",
   agentRoleLabel = "",
+  agentHomeZone = "hq",
   isSelected = false,
   onSelect = null,
   agentColor = "#8888ff",
@@ -180,7 +122,6 @@ function AgentCharacter({
   const currentActionRef = useRef(null);
   const [hovered, setHovered] = useState(false);
 
-  // Game state for UI
   const [currentMode, setCurrentMode] = useState("idle");
   const [activityText, setActivityText] = useState("");
   const [activityEmoji, setActivityEmoji] = useState("");
@@ -189,15 +130,17 @@ function AgentCharacter({
   const [tasksCompleted, setTasksCompleted] = useState(0);
   const [visitReason, setVisitReason] = useState("");
 
-  // Store actions
   const startVisit = useAgentStore((s) => s.startVisit);
   const startMeeting = useAgentStore((s) => s.startMeeting);
   const endVisit = useAgentStore((s) => s.endVisit);
 
-  // Get zone interactions for this agent's role
+  // Current zone key — tracks where the agent actually is (for LOKI nomad rotation)
+  const currentZoneKeyRef = useRef(zoneKey);
+
+  // Get zone interactions for this agent's current zone
   const zoneInteractions = useMemo(() => {
-    return ZONE_INTERACTIONS[agentRole] || ZONE_INTERACTIONS.director;
-  }, [agentRole]);
+    return ZONE_INTERACTIONS[zoneKey] || ZONE_INTERACTIONS.hq;
+  }, [zoneKey]);
 
   // Agent state machine
   const stateRef = useRef({
@@ -215,6 +158,11 @@ function AgentCharacter({
     nextActivityTime: Date.now() + Math.random() * 3000 + 1000,
     nextVisitTime: Date.now() + Math.random() * 25000 + 15000,
 
+    // LOKI nomad: time to rotate to next zone
+    nextNomadRotation: agentHomeZone === "nomad"
+      ? Date.now() + NOMAD_MIN_MS + Math.random() * (NOMAD_MAX_MS - NOMAD_MIN_MS)
+      : Infinity,
+
     visitingAgentId: null,
     currentInteraction: null,
     workSessionsToday: 0,
@@ -224,17 +172,18 @@ function AgentCharacter({
   const clonedScene = useMemo(() => skeletonClone(scene), [scene]);
   const { actions, mixer } = useAnimations(animations, characterRef);
 
-  // Zone boundaries
+  // Zone boundaries — based on zone center for full zone wandering
   const zoneBounds = useMemo(() => {
+    const zc = zoneCenter;
     const halfW = (zoneSize[0] / 2) - 2;
     const halfD = (zoneSize[1] / 2) - 2;
     return {
-      minX: position[0] - halfW,
-      maxX: position[0] + halfW,
-      minZ: position[2] - halfD,
-      maxZ: position[2] + halfD,
+      minX: zc[0] - halfW,
+      maxX: zc[0] + halfW,
+      minZ: zc[2] - halfD,
+      maxZ: zc[2] + halfD,
     };
-  }, [position, zoneSize]);
+  }, [zoneCenter, zoneSize]);
 
   // Colors
   const tintColor = useMemo(() => (color ? new THREE.Color(color) : null), [color]);
@@ -348,11 +297,12 @@ function AgentCharacter({
     if (idleAction) crossFadeTo(idleAction, 0.3, 0.8);
   }, [actions, crossFadeTo]);
 
-  // ── Behavior: Go to interaction point ────────────────────────────
+  // ── Behavior: Go to interaction point (offset from zone center) ──
   const goToInteraction = useCallback((interaction) => {
     const s = stateRef.current;
-    const targetX = position[0] + interaction.offset[0];
-    const targetZ = position[2] + interaction.offset[2];
+    const zc = zoneCenter;
+    const targetX = zc[0] + interaction.offset[0];
+    const targetZ = zc[2] + interaction.offset[2];
 
     s.targetPos.set(targetX, position[1], targetZ);
     s.mode = "goingToInteraction";
@@ -368,7 +318,7 @@ function AgentCharacter({
     s.targetRotation = Math.atan2(dx, dz);
 
     startWalk();
-  }, [position, startWalk]);
+  }, [zoneCenter, position, startWalk]);
 
   // ── Behavior: Start interacting with object ──────────────────────
   const startInteracting = useCallback(() => {
@@ -387,17 +337,18 @@ function AgentCharacter({
     setActivityText(interaction.activity);
     setActivityEmoji(interaction.emoji);
 
-    // Face the object (towards zone center for most)
-    const dx = position[0] - s.currentPos.x;
-    const dz = position[2] - s.currentPos.z;
+    // Face towards zone center
+    const zc = zoneCenter;
+    const dx = zc[0] - s.currentPos.x;
+    const dz = zc[2] - s.currentPos.z;
     if (Math.abs(dx) > 0.5 || Math.abs(dz) > 0.5) {
       s.targetRotation = Math.atan2(dx, dz);
     }
 
     startIdle();
-  }, [position, startIdle]);
+  }, [zoneCenter, startIdle]);
 
-  // ── Behavior: Random wander ──────────────────────────────────────
+  // ── Behavior: Random wander within zone ──────────────────────────
   const startWandering = useCallback(() => {
     const s = stateRef.current;
     const targetX = zoneBounds.minX + Math.random() * (zoneBounds.maxX - zoneBounds.minX);
@@ -418,7 +369,7 @@ function AgentCharacter({
     startWalk();
   }, [zoneBounds, position, startWalk]);
 
-  // ── Behavior: Visit another agent ────────────────────────────────
+  // ── Behavior: Visit another agent (cross-zone or same-zone) ──────
   const visitAgent = useCallback((targetAgentId) => {
     const targetInfo = allAgentPositions[targetAgentId];
     if (!targetInfo) return;
@@ -426,13 +377,19 @@ function AgentCharacter({
     const s = stateRef.current;
     const [tx, ty, tz] = targetInfo.position;
 
-    // Get visit reason
-    const reasons = VISIT_REASONS[agentRole]?.[targetAgentId] || ["Quick sync", "Collaboration", "Update"];
+    // Determine visit reason based on zone pair
+    const fromZone = currentZoneKeyRef.current;
+    const toZone = targetInfo.zoneKey;
+    const routeKey = `${fromZone}->${toZone}`;
+    const reasons = VISIT_REASONS[routeKey] || ["Quick sync", "Collaboration", "Update"];
     const reason = reasons[Math.floor(Math.random() * reasons.length)];
 
     const offset = 3;
     const angle = Math.random() * Math.PI * 2;
     s.targetPos.set(tx + Math.cos(angle) * offset, ty, tz + Math.sin(angle) * offset);
+
+    // Same-zone visit = walk, cross-zone = run
+    const isCrossZone = fromZone !== toZone;
 
     s.mode = "traveling";
     s.isMoving = true;
@@ -440,16 +397,20 @@ function AgentCharacter({
 
     setCurrentMode("traveling");
     setActivityText(reason);
-    setActivityEmoji("🏃");
+    setActivityEmoji(isCrossZone ? "🏃" : "🚶");
     setVisitReason(reason);
 
     const dx = s.targetPos.x - s.currentPos.x;
     const dz = s.targetPos.z - s.currentPos.z;
     s.targetRotation = Math.atan2(dx, dz);
 
-    startRun();
+    if (isCrossZone) {
+      startRun();
+    } else {
+      startWalk();
+    }
     startVisit(agentId, targetAgentId);
-  }, [allAgentPositions, agentRole, startRun, startVisit, agentId]);
+  }, [allAgentPositions, startRun, startWalk, startVisit, agentId]);
 
   // ── Behavior: Begin meeting ──────────────────────────────────────
   const beginMeeting = useCallback(() => {
@@ -518,6 +479,38 @@ function AgentCharacter({
     setTimeout(() => setShowCelebration(false), 2500);
   }, [playOneShot, startIdle]);
 
+  // ── LOKI nomad rotation ──────────────────────────────────────────
+  const nomadRotate = useCallback(() => {
+    const s = stateRef.current;
+    const allZoneKeys = Object.keys(ZONE_POSITIONS);
+    const currentZone = currentZoneKeyRef.current;
+
+    // Pick a different zone
+    const otherZones = allZoneKeys.filter((z) => z !== currentZone);
+    const nextZone = otherZones[Math.floor(Math.random() * otherZones.length)];
+    const targetZonePos = ZONE_POSITIONS[nextZone].position;
+
+    currentZoneKeyRef.current = nextZone;
+
+    // Run to center of next zone
+    s.targetPos.set(targetZonePos[0], position[1], targetZonePos[2]);
+    s.mode = "nomad-traveling";
+    s.isMoving = true;
+
+    setCurrentMode("traveling");
+    setActivityText(`Rotating to ${ZONE_POSITIONS[nextZone].label}`);
+    setActivityEmoji("🌀");
+
+    const dx = s.targetPos.x - s.currentPos.x;
+    const dz = s.targetPos.z - s.currentPos.z;
+    s.targetRotation = Math.atan2(dx, dz);
+
+    startRun();
+
+    // Schedule next rotation
+    s.nextNomadRotation = Date.now() + NOMAD_MIN_MS + Math.random() * (NOMAD_MAX_MS - NOMAD_MIN_MS);
+  }, [position, startRun]);
+
   // ── Pick next activity ───────────────────────────────────────────
   const pickNextActivity = useCallback(() => {
     const activity = STATUS_ACTIVITY[status] || 0.3;
@@ -533,17 +526,17 @@ function AgentCharacter({
       return;
     }
 
+    // Get interactions for current zone (may differ from home for LOKI)
+    const currentInteractions = ZONE_INTERACTIONS[currentZoneKeyRef.current] || ZONE_INTERACTIONS.hq;
+
     const roll = Math.random();
 
-    if (roll < 0.55 * activity && zoneInteractions.length > 0) {
-      // Go interact with an object in zone
-      const interaction = zoneInteractions[Math.floor(Math.random() * zoneInteractions.length)];
+    if (roll < 0.55 * activity && currentInteractions.length > 0) {
+      const interaction = currentInteractions[Math.floor(Math.random() * currentInteractions.length)];
       goToInteraction(interaction);
     } else if (roll < 0.75 * activity) {
-      // Wander around
       startWandering();
     } else if (roll < 0.85 * activity) {
-      // Brief thinking/idle
       s.mode = "thinking";
       s.activityEndTime = Date.now() + 3000 + Math.random() * 4000;
       setCurrentMode("thinking");
@@ -552,7 +545,6 @@ function AgentCharacter({
       startIdle();
       s.targetRotation += (Math.random() - 0.5) * Math.PI * 0.5;
     } else {
-      // Just idle
       s.mode = "idle";
       s.activityEndTime = Date.now() + 2000 + Math.random() * 3000;
       setCurrentMode("idle");
@@ -560,7 +552,7 @@ function AgentCharacter({
       setActivityEmoji("");
       startIdle();
     }
-  }, [status, zoneInteractions, goToInteraction, startWandering, startIdle]);
+  }, [status, goToInteraction, startWandering, startIdle]);
 
   // ── Initialize ───────────────────────────────────────────────────
   useEffect(() => {
@@ -610,6 +602,11 @@ function AgentCharacter({
       return;
     }
 
+    // ── LOKI nomad rotation check ────────────────────────────────
+    if (agentHomeZone === "nomad" && now > s.nextNomadRotation && s.mode !== "nomad-traveling" && s.mode !== "traveling" && s.mode !== "meeting") {
+      nomadRotate();
+    }
+
     // ── State machine ──────────────────────────────────────────────
     switch (s.mode) {
       case "idle":
@@ -626,10 +623,22 @@ function AgentCharacter({
 
         // Check for visit opportunity
         if (now > s.nextVisitTime && s.mode !== "celebrating") {
+          const myZone = currentZoneKeyRef.current;
           const otherAgents = Object.keys(allAgentPositions).filter(id => id !== agentId);
+
           if (otherAgents.length > 0 && Math.random() < activity * 0.5) {
-            const targetId = otherAgents[Math.floor(Math.random() * otherAgents.length)];
-            visitAgent(targetId);
+            // 70% same-zone, 30% cross-zone
+            const sameZoneAgents = otherAgents.filter(id => allAgentPositions[id].zoneKey === myZone);
+            const crossZoneAgents = otherAgents.filter(id => allAgentPositions[id].zoneKey !== myZone);
+
+            let targetId;
+            if (sameZoneAgents.length > 0 && (Math.random() < 0.7 || crossZoneAgents.length === 0)) {
+              targetId = sameZoneAgents[Math.floor(Math.random() * sameZoneAgents.length)];
+            } else if (crossZoneAgents.length > 0) {
+              targetId = crossZoneAgents[Math.floor(Math.random() * crossZoneAgents.length)];
+            }
+
+            if (targetId) visitAgent(targetId);
           }
           s.nextVisitTime = now + (20000 + Math.random() * 35000) / activity;
         }
@@ -639,6 +648,7 @@ function AgentCharacter({
       case "wandering":
       case "traveling":
       case "returning":
+      case "nomad-traveling":
         if (s.isMoving) {
           const dx = s.targetPos.x - s.currentPos.x;
           const dz = s.targetPos.z - s.currentPos.z;
@@ -652,6 +662,9 @@ function AgentCharacter({
               startInteracting();
             } else if (s.mode === "traveling") {
               beginMeeting();
+            } else if (s.mode === "nomad-traveling") {
+              // LOKI arrived at new zone, start normal activities there
+              pickNextActivity();
             } else {
               pickNextActivity();
             }

@@ -4,22 +4,13 @@ import { Html } from "@react-three/drei";
 /**
  * ChatBubble.jsx - A 3D speech bubble that floats above an agent character.
  *
- * Uses drei Html to render a styled HTML div in 3D space.
- * Positioned ~3.5 units above the platform (above the character head).
- * Shows the agent last activity / current task with auto-hide after 8 seconds.
- *
- * Props:
- *   position    - [x, y, z] world position of the agent platform
- *   message     - string to display in the bubble
- *   agentColor  - hex color for accent border
- *   agentName   - display name for the agent
- *   visible     - whether the bubble should be shown
- *   onHide      - callback when bubble auto-hides
+ * More prominent: larger text, higher Y offset, longer visibility,
+ * stronger background, thicker border accent.
  */
 
-const BUBBLE_Y_OFFSET = 3.5;
-const AUTO_HIDE_MS = 8000;
-const MAX_CHARS = 60;
+const BUBBLE_Y_OFFSET = 5;
+const AUTO_HIDE_MS = 12000;
+const MAX_CHARS = 80;
 
 function ChatBubble({
   position = [0, 0, 0],
@@ -33,24 +24,19 @@ function ChatBubble({
   const timerRef = useRef(null);
   const fadeTimerRef = useRef(null);
 
-  // Truncate long messages
   const displayText =
     message.length > MAX_CHARS
       ? message.slice(0, MAX_CHARS - 3) + "..."
       : message;
 
-  // Auto-hide after 8 seconds
   useEffect(() => {
     if (!visible || !message) return;
 
-    // Reset fading state on new message
     setFading(false);
 
-    // Clear previous timers
     if (timerRef.current) clearTimeout(timerRef.current);
     if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
 
-    // Start fade-out 500ms before hide
     timerRef.current = setTimeout(() => {
       setFading(true);
       fadeTimerRef.current = setTimeout(() => {
@@ -76,7 +62,7 @@ function ChatBubble({
     <group position={bubblePosition}>
       <Html
         center
-        distanceFactor={18}
+        distanceFactor={14}
         occlude={false}
         style={{
           pointerEvents: "none",
@@ -86,13 +72,47 @@ function ChatBubble({
       >
         <div
           className={`chat-bubble ${fading ? "chat-bubble--fade-out" : "chat-bubble--fade-in"}`}
-          style={{ "--agent-color": agentColor }}
+          style={{
+            "--agent-color": agentColor,
+            background: "rgba(10, 10, 30, 0.92)",
+            borderLeft: `3px solid ${agentColor}`,
+            borderRadius: "10px",
+            padding: "8px 14px",
+            maxWidth: "220px",
+            boxShadow: `0 4px 16px rgba(0,0,0,0.5), 0 0 8px ${agentColor}33`,
+          }}
         >
-          <div className="chat-bubble__name" style={{ color: agentColor }}>
+          <div style={{
+            color: agentColor,
+            fontSize: "12px",
+            fontWeight: 700,
+            fontFamily: "Inter, SF Pro Display, -apple-system, sans-serif",
+            marginBottom: "4px",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+          }}>
             {agentName}
           </div>
-          <div className="chat-bubble__text">{displayText}</div>
-          <div className="chat-bubble__pointer" style={{ borderTopColor: "rgba(10, 10, 30, 0.85)" }} />
+          <div style={{
+            color: "#e8e8f0",
+            fontSize: "13px",
+            fontWeight: 500,
+            fontFamily: "Inter, SF Pro Display, -apple-system, sans-serif",
+            lineHeight: "1.4",
+          }}>
+            {displayText}
+          </div>
+          <div style={{
+            position: "absolute",
+            bottom: "-8px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: 0,
+            height: 0,
+            borderLeft: "8px solid transparent",
+            borderRight: "8px solid transparent",
+            borderTop: "8px solid rgba(10, 10, 30, 0.92)",
+          }} />
         </div>
       </Html>
     </group>

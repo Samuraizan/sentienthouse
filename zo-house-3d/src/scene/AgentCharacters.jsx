@@ -2,19 +2,16 @@ import { useMemo, useCallback } from "react";
 import { useGLTF } from "@react-three/drei";
 import useAgentStore from "../store/agentStore";
 import AgentCharacter from "./AgentCharacter";
-import { ZONE_POSITIONS } from "./Zones";
+import { ZONE_POSITIONS, ZONE_HOME_OFFSETS } from "./Zones";
 
 /**
  * AgentCharacters.jsx — Container that renders all 7 animated character models
- * standing at the center of their respective department zones.
+ * placed within their home zones using per-agent offsets.
  *
- * Uses ZONE_POSITIONS from Zones.jsx so characters stand centered in their
- * rectangular zone platforms. Each character faces the HQ center.
+ * Uses homeZone from agentStore + ZONE_HOME_OFFSETS from Zones.jsx
+ * so multiple agents in the same zone don't overlap.
  */
 
-/**
- * Map agent IDs to their GLB model paths and optional tint colors.
- */
 const CHARACTER_CONFIG = {
   zomadprime:   { model: "/models/characters/zomadprime.glb",  tint: null },
   "blrxzo-jr":  { model: "/models/characters/blrxzo-jr.glb",  tint: null },
@@ -25,10 +22,6 @@ const CHARACTER_CONFIG = {
   yana:         { model: "/models/characters/yana.glb",        tint: "#ff88cc" },
 };
 
-/**
- * Y offset to place character on top of the zone platform.
- * Platform surface is at ~y=0.1, so offset character slightly above.
- */
 const PLATFORM_Y_OFFSET = 0.12;
 
 export default function AgentCharacters() {
@@ -39,7 +32,6 @@ export default function AgentCharacters() {
 
   const handleSelect = useCallback(
     (agentId) => {
-      // Toggle: if already open for this agent, close it; otherwise open
       if (skillTreeAgentId === agentId) {
         closeSkillTree();
       } else {
@@ -49,7 +41,6 @@ export default function AgentCharacters() {
     [skillTreeAgentId, openSkillTree, closeSkillTree]
   );
 
-  // Build character data and positions map for inter-agent visits
   const { characters, allAgentPositions } = useMemo(() => {
     const charList = [];
     const positionsMap = {};
@@ -58,19 +49,24 @@ export default function AgentCharacters() {
       const config = CHARACTER_CONFIG[agent.id];
       if (!config) return;
 
-      const zone = ZONE_POSITIONS[agent.role];
+      // Resolve home zone — nomad defaults to hq
+      const homeZoneKey = agent.homeZone === "nomad" ? "hq" : agent.homeZone;
+      const zone = ZONE_POSITIONS[homeZoneKey];
       if (!zone) return;
 
+      // Apply per-agent offset within the zone
+      const offset = ZONE_HOME_OFFSETS[agent.id] || [0, 0, 0];
       const position = [
-        zone.position[0],
+        zone.position[0] + offset[0],
         zone.position[1] + PLATFORM_Y_OFFSET,
-        zone.position[2],
+        zone.position[2] + offset[2],
       ];
 
-      // Store position for inter-agent visits
       positionsMap[agent.id] = {
         position,
         zoneSize: zone.size,
+        zoneKey: homeZoneKey,
+        zoneCenter: zone.position,
       };
 
       charList.push({
@@ -78,12 +74,15 @@ export default function AgentCharacters() {
         modelPath: config.model,
         position,
         zoneSize: zone.size,
+        zoneKey: homeZoneKey,
+        zoneCenter: zone.position,
         color: config.tint,
         status: agent.status,
         agentColor: agent.color,
         agentName: agent.name,
         agentRoleLabel: zone.label,
-        agentRole: agent.role, // Pass role key for interaction lookups
+        agentRole: agent.role,
+        agentHomeZone: agent.homeZone,
         currentTask: agent.currentTask,
       });
     });
@@ -100,9 +99,12 @@ export default function AgentCharacters() {
           agentName={char.agentName}
           agentRole={char.agentRole}
           agentRoleLabel={char.agentRoleLabel}
+          agentHomeZone={char.agentHomeZone}
           modelPath={char.modelPath}
           position={char.position}
           zoneSize={char.zoneSize}
+          zoneKey={char.zoneKey}
+          zoneCenter={char.zoneCenter}
           color={char.color}
           status={char.status}
           agentColor={char.agentColor}
@@ -116,9 +118,6 @@ export default function AgentCharacters() {
   );
 }
 
-/**
- * Preload all GLB models.
- */
 Object.values(CHARACTER_CONFIG).forEach(({ model }) => {
   useGLTF.preload(model);
 });

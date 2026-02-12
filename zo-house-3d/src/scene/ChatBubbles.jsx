@@ -1,27 +1,19 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import useAgentStore from "../store/agentStore";
 import ChatBubble from "./ChatBubble";
-import { ZONE_POSITIONS } from "./Zones";
+import { ZONE_POSITIONS, ZONE_HOME_OFFSETS } from "./Zones";
 
 /**
  * ChatBubbles.jsx - Container that manages all 3D chat bubbles above agent characters.
  *
- * Uses ZONE_POSITIONS from Zones.jsx for department-based layout positioning.
- * Shows a speech bubble above each agent that has recent activity.
+ * Uses homeZone + ZONE_HOME_OFFSETS for position lookups.
+ * Bubbles are more prominent — larger, longer visible, higher contrast.
  */
 
-// Platform Y offset (characters stand at ~0.12, bubble goes above)
 const PLATFORM_Y_OFFSET = 0.12;
-
-// Stagger delay between bubble appearances (ms)
 const STAGGER_DELAY = 400;
-
-// How recent activity must be to show a bubble (5 minutes)
 const RECENT_THRESHOLD_MS = 5 * 60 * 1000;
 
-/**
- * Generate a contextual message for an agent based on their state.
- */
 function getAgentMessage(agent, cronJobs) {
   const agentCrons = cronJobs.filter((j) => j.agent === agent.id);
   const now = Date.now();
@@ -64,7 +56,9 @@ export default function ChatBubbles() {
     const now = Date.now();
     return agents
       .map((agent) => {
-        const zone = ZONE_POSITIONS[agent.role];
+        // Resolve zone position using homeZone + offset
+        const homeZoneKey = agent.homeZone === "nomad" ? "hq" : agent.homeZone;
+        const zone = ZONE_POSITIONS[homeZoneKey];
         if (!zone) return null;
 
         const isRecent =
@@ -83,10 +77,11 @@ export default function ChatBubbles() {
         const message = getAgentMessage(agent, cronJobs);
         if (!message) return null;
 
+        const offset = ZONE_HOME_OFFSETS[agent.id] || [0, 0, 0];
         const position = [
-          zone.position[0],
+          zone.position[0] + offset[0],
           zone.position[1] + PLATFORM_Y_OFFSET,
-          zone.position[2],
+          zone.position[2] + offset[2],
         ];
 
         return {

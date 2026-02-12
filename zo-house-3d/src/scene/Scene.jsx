@@ -24,8 +24,8 @@ function SceneContent() {
       {/* Camera controller — handles presets, agent focus, cinematic orbit */}
       <CameraController />
 
-      {/* Very subtle fog */}
-      <fog attach="fog" args={["#1a1820", 120, 350]} />
+      {/* Very subtle fog — wider for 3-zone layout */}
+      <fog attach="fog" args={["#1a1820", 140, 400]} />
 
       {/* Lighting rig */}
       <Lighting />
@@ -33,13 +33,13 @@ function SceneContent() {
       {/* Ground plane */}
       <Floor />
 
-      {/* 7 Department Zone Platforms — rectangular layout */}
+      {/* 3 Zone Platforms — HQ center, BLRxZo House left, WTFxZo House right */}
       <Zones />
 
-      {/* Themed decorations for each agent's workspace */}
+      {/* Themed decorations for each zone's workspace */}
       <ZoneDecorations />
 
-      {/* 7 Animated Character Models — standing in their zones */}
+      {/* 7 Animated Character Models — distributed across 3 zones */}
       <AgentCharacters />
 
       {/* Visual connection beams during agent meetings */}
@@ -65,10 +65,10 @@ export default function Scene() {
         toneMappingExposure: 1.5,
       }}
       camera={{
-        position: [85, 65, 85],
+        position: [90, 70, 90],
         fov: 45,
         near: 0.1,
-        far: 400,
+        far: 500,
       }}
       style={{ position: "absolute", top: 0, left: 0 }}
     >

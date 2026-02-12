@@ -7,38 +7,31 @@ import { ZONE_POSITIONS } from "./Zones";
 /**
  * Effects.jsx — Atmospheric visual effects for the Zo House 3D Command Center.
  *
- * Uses department-based zone layout from ZONE_POSITIONS.
- * Warm-toned effects: fewer particles, warm orange connection lines from HQ
- * to each department zone, subtle zone glows, and warm-toned ambient orbs.
+ * 3-zone layout: connection lines from HQ to 2 houses, zone glows for 3 zones,
+ * warm-toned particles and ambient orbs.
  */
 
-// Build outer zone list (all zones except director/HQ)
-const OUTER_ZONES = Object.entries(ZONE_POSITIONS)
-  .filter(([role]) => role !== "director")
-  .map(([role, zone]) => ({
-    role,
-    position: zone.position,
-    color: zone.color,
-  }));
-
-// HQ position for connection line origins
-const HQ_POSITION = ZONE_POSITIONS.director.position;
+// HQ and house zones for connection lines
+const HQ_POSITION = ZONE_POSITIONS.hq.position;
+const HOUSE_ZONES = [
+  { key: "blrxzo-house", position: ZONE_POSITIONS["blrxzo-house"].position, color: ZONE_POSITIONS["blrxzo-house"].color },
+  { key: "wtfxzo-house", position: ZONE_POSITIONS["wtfxzo-house"].position, color: ZONE_POSITIONS["wtfxzo-house"].color },
+];
 
 // 1. FLOATING PARTICLES — reduced count, warm palette
 
 const PARTICLE_COUNT = 80;
-const PARTICLE_SPREAD = 22;
+const PARTICLE_SPREAD = 30;
 const PARTICLE_HEIGHT = 18;
 const PARTICLE_BASE_Y = -1;
 
 function FloatingParticles() {
   const pointsRef = useRef();
 
-  const { positions, velocities, colors, sizes } = useMemo(() => {
+  const { positions, velocities, colors } = useMemo(() => {
     const pos = new Float32Array(PARTICLE_COUNT * 3);
     const vel = new Float32Array(PARTICLE_COUNT * 3);
     const col = new Float32Array(PARTICLE_COUNT * 3);
-    const sz = new Float32Array(PARTICLE_COUNT);
 
     const warmColors = [
       new THREE.Color("#ff9966"),
@@ -66,11 +59,9 @@ function FloatingParticles() {
       col[i3] = c.r;
       col[i3 + 1] = c.g;
       col[i3 + 2] = c.b;
-
-      sz[i] = 0.1 + Math.random() * 0.2;
     }
 
-    return { positions: pos, velocities: vel, colors: col, sizes: sz };
+    return { positions: pos, velocities: vel, colors: col };
   }, []);
 
   useFrame(() => {
@@ -124,9 +115,9 @@ function FloatingParticles() {
   );
 }
 
-// 2. CONNECTION LINES — from HQ center to each department zone
+// 2. CONNECTION LINES — HQ to each house zone (2 lines)
 
-function ConnectionLine({ origin, target, color, isActive }) {
+function ConnectionLine({ origin, target, isActive }) {
   const lineRef = useRef();
   const dotRef = useRef();
 
@@ -158,7 +149,6 @@ function ConnectionLine({ origin, target, color, isActive }) {
       const raw = (t * speed) % 2;
       const progress = raw <= 1 ? raw : 2 - raw;
 
-      // Interpolate between origin and target
       dotRef.current.position.x = origin[0] + (target[0] - origin[0]) * progress;
       dotRef.current.position.z = origin[2] + (target[2] - origin[2]) * progress;
       dotRef.current.position.y = 0.5;
@@ -199,16 +189,20 @@ function ConnectionLines() {
   const agents = useAgentStore((state) => state.agents);
 
   const lines = useMemo(() => {
-    return OUTER_ZONES.map((oz) => {
-      const agent = agents.find((a) => a.role === oz.role);
-      const isActive = agent
-        ? agent.status === "active" || agent.status === "online"
-        : false;
+    return HOUSE_ZONES.map((hz) => {
+      // Check if any agent in this house zone is active
+      const houseAgents = agents.filter((a) => {
+        const home = a.homeZone === "nomad" ? "hq" : a.homeZone;
+        return home === hz.key;
+      });
+      const isActive = houseAgents.some(
+        (a) => a.status === "active" || a.status === "online"
+      );
       return {
-        key: oz.role,
+        key: hz.key,
         origin: HQ_POSITION,
-        target: oz.position,
-        color: oz.color,
+        target: hz.position,
+        color: hz.color,
         isActive,
       };
     });
@@ -221,7 +215,6 @@ function ConnectionLines() {
           key={line.key}
           origin={line.origin}
           target={line.target}
-          color={line.color}
           isActive={line.isActive}
         />
       ))}
@@ -229,7 +222,7 @@ function ConnectionLines() {
   );
 }
 
-// 3. ZONE GLOW HALOS — positioned at each department zone
+// 3. ZONE GLOW HALOS — 3 zones
 
 function ZoneGlow({ position, color, isActive }) {
   const meshRef = useRef();
@@ -253,7 +246,7 @@ function ZoneGlow({ position, color, isActive }) {
       position={[position[0], 0.04, position[2]]}
       rotation={[-Math.PI / 2, 0, 0]}
     >
-      <circleGeometry args={[5, 32]} />
+      <circleGeometry args={[8, 32]} />
       <meshBasicMaterial
         color={warmColor}
         transparent
@@ -270,22 +263,22 @@ function ZoneGlowHalos() {
   const agents = useAgentStore((state) => state.agents);
 
   const halos = useMemo(() => {
-    const result = [];
-
-    Object.entries(ZONE_POSITIONS).forEach(([role, zone]) => {
-      const agent = agents.find((a) => a.role === role);
-      const isActive = agent
-        ? agent.status === "active" || agent.status === "online"
-        : false;
-      result.push({
-        key: role,
+    return Object.entries(ZONE_POSITIONS).map(([zoneKey, zone]) => {
+      // Check if any agent in this zone is active
+      const residents = agents.filter((a) => {
+        const home = a.homeZone === "nomad" ? "hq" : a.homeZone;
+        return home === zoneKey;
+      });
+      const isActive = residents.some(
+        (a) => a.status === "active" || a.status === "online"
+      );
+      return {
+        key: zoneKey,
         position: zone.position,
         color: zone.color,
         isActive,
-      });
+      };
     });
-
-    return result;
   }, [agents]);
 
   return (
@@ -302,11 +295,11 @@ function ZoneGlowHalos() {
   );
 }
 
-// 4. AMBIENT FLOATING ORBS — warm tones, wider orbit for new layout
+// 4. AMBIENT FLOATING ORBS — warm tones, wider orbit
 
 const ORB_CONFIG = [
-  { color: "#ffaa44", radius: 12,  height: 7,  speed: 0.1,  phase: 0 },
-  { color: "#ff8866", radius: 16, height: 10, speed: 0.07, phase: Math.PI },
+  { color: "#ffaa44", radius: 18,  height: 7,  speed: 0.1,  phase: 0 },
+  { color: "#ff8866", radius: 24, height: 10, speed: 0.07, phase: Math.PI },
 ];
 
 function FloatingOrb({ color, radius, height, speed, phase }) {

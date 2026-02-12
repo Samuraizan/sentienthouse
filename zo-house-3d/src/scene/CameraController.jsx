@@ -3,7 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import useAgentStore from "../store/agentStore";
-import { ZONE_POSITIONS } from "./Zones";
+import { ZONE_POSITIONS, ZONE_HOME_OFFSETS } from "./Zones";
 
 const LERP_SPEED = 2.8;
 const CINEMATIC_ORBIT_SPEED = 0.1;
@@ -11,40 +11,40 @@ const ARRIVE_THRESHOLD = 0.05;
 
 const PRESETS = {
   overview: {
-    position: new THREE.Vector3(85, 65, 85),
+    position: new THREE.Vector3(90, 70, 90),
     target: new THREE.Vector3(0, 0, 0),
   },
   topdown: {
-    position: new THREE.Vector3(0.001, 120, 0.001),
+    position: new THREE.Vector3(0.001, 140, 0.001),
     target: new THREE.Vector3(0, 0, 0),
   },
 };
 
-function agentFocusCamera(role) {
-  const zone = ZONE_POSITIONS[role];
+function agentFocusCamera(agent) {
+  // Resolve agent position using homeZone + offset
+  const homeZoneKey = agent.homeZone === "nomad" ? "hq" : agent.homeZone;
+  const zone = ZONE_POSITIONS[homeZoneKey];
   if (!zone) {
     return {
-      position: new THREE.Vector3(85, 65, 85),
+      position: new THREE.Vector3(90, 70, 90),
       target: new THREE.Vector3(0, 0, 0),
     };
   }
 
+  const offset = ZONE_HOME_OFFSETS[agent.id] || [0, 0, 0];
   const agentPos = new THREE.Vector3(
-    zone.position[0],
+    zone.position[0] + offset[0],
     zone.position[1],
-    zone.position[2]
+    zone.position[2] + offset[2]
   );
 
-  // Direction FROM center TO agent (agents face center, so we go opposite direction)
   const dir = agentPos.clone().normalize();
   if (dir.length() < 0.01) dir.set(0, 0, 1);
 
-  // Position camera IN FRONT of agent (between agent and center)
-  // by going in the OPPOSITE direction from the agent
   const cameraPos = agentPos
     .clone()
-    .sub(dir.multiplyScalar(28))  // Move toward center (in front of agent)
-    .add(new THREE.Vector3(0, 14, 0));  // Raise camera height
+    .sub(dir.multiplyScalar(28))
+    .add(new THREE.Vector3(0, 14, 0));
 
   const targetPos = agentPos.clone().add(new THREE.Vector3(0, 4, 0));
 
@@ -59,7 +59,7 @@ export default function CameraController() {
   const cameraPreset = useAgentStore((s) => s.cameraPreset);
   const agents = useAgentStore((s) => s.agents);
 
-  const goalPosition = useRef(new THREE.Vector3(85, 65, 85));
+  const goalPosition = useRef(new THREE.Vector3(90, 70, 90));
   const goalTarget = useRef(new THREE.Vector3(0, 0, 0));
   const isTransitioning = useRef(false);
   const isCinematic = useRef(false);
@@ -69,7 +69,7 @@ export default function CameraController() {
     if (skillTreeAgentId) {
       const agent = agents.find((a) => a.id === skillTreeAgentId);
       if (agent) {
-        const { position, target } = agentFocusCamera(agent.role);
+        const { position, target } = agentFocusCamera(agent);
         goalPosition.current.copy(position);
         goalTarget.current.copy(target);
         isTransitioning.current = true;
@@ -97,8 +97,8 @@ export default function CameraController() {
 
     if (isCinematic.current) {
       cinematicAngle.current += CINEMATIC_ORBIT_SPEED * delta;
-      const radius = 44;
-      const height = 24;
+      const radius = 55;
+      const height = 28;
       const a = cinematicAngle.current;
       camera.position.set(
         radius * Math.sin(a),
@@ -131,29 +131,22 @@ export default function CameraController() {
   return (
     <OrbitControls
       ref={controlsRef}
-      // Angle limits - allow looking from above but not below ground
       minPolarAngle={Math.PI / 8}
       maxPolarAngle={Math.PI / 2.2}
-      // Zoom limits - close up to far overview
       minDistance={8}
-      maxDistance={200}
-      // Enable all controls
+      maxDistance={250}
       enablePan={true}
       enableZoom={true}
       enableRotate={true}
-      // Speed settings
       panSpeed={1.0}
       rotateSpeed={0.6}
       zoomSpeed={1.2}
-      // Smooth damping
       enableDamping={true}
       dampingFactor={0.08}
-      // Touch support for mobile
       touches={{
         ONE: THREE.TOUCH.ROTATE,
         TWO: THREE.TOUCH.DOLLY_PAN,
       }}
-      // Mouse buttons
       mouseButtons={{
         LEFT: THREE.MOUSE.ROTATE,
         MIDDLE: THREE.MOUSE.DOLLY,

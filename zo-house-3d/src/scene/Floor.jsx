@@ -97,14 +97,14 @@ export default function Floor() {
 
   return (
     <group onClick={handleFloorClick}>
-      {/* Main floor — enlarged for wider layout */}
+      {/* Main floor — enlarged for 3-zone layout (spans -76 to +76) */}
       <mesh
         ref={meshRef}
         rotation-x={-Math.PI / 2}
         position={[0, 0, 0]}
         receiveShadow
       >
-        <circleGeometry args={[55, 128]} />
+        <circleGeometry args={[85, 128]} />
         <meshStandardMaterial
           map={gridTexture}
           color="#1e1c24"
@@ -115,12 +115,13 @@ export default function Floor() {
         />
       </mesh>
 
-      {/* Concentric reference rings — wider spacing for new layout */}
-      <FloorRing radius={6} color="#ff8855" opacity={0.08} />
-      <FloorRing radius={14} color="#ff8855" opacity={0.06} />
-      <FloorRing radius={22} color="#ff8855" opacity={0.05} />
-      <FloorRing radius={32} color="#ff8855" opacity={0.04} />
-      <FloorRing radius={44} color="#ff8855" opacity={0.03} />
+      {/* Concentric reference rings — wider spacing for 3-zone layout */}
+      <FloorRing radius={8} color="#ff8855" opacity={0.08} />
+      <FloorRing radius={20} color="#ff8855" opacity={0.06} />
+      <FloorRing radius={32} color="#ff8855" opacity={0.05} />
+      <FloorRing radius={48} color="#ff8855" opacity={0.04} />
+      <FloorRing radius={64} color="#ff8855" opacity={0.03} />
+      <FloorRing radius={80} color="#ff8855" opacity={0.02} />
 
       {/* Center dot marker */}
       <mesh position={[0, 0.05, 0]} rotation-x={-Math.PI / 2}>

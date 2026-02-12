@@ -3,130 +3,110 @@ import useAgentStore from "../store/agentStore";
 import ZonePlatform from "./ZonePlatform";
 
 /**
- * Zones.jsx — Department-based zone layout for the Zo House 3D Command Center.
- *
- * Replaces the old hexagonal ring with an isometric grid of rectangular
- * department zones. Each zone is a raised rectangular floor plate with
- * an outlined border and department label.
+ * Zones.jsx — 3-zone layout for the Zo House 3D Command Center.
  *
  * Layout:
- *                     [HQ - ZomadPrime]
- *                     (center, largest)
- *
- *     [BLRxZo]                            [WTFxZo]
- *     (left)                              (right)
- *
- *          [Events - Suki]         [Sales - Wanda]
- *          (front-left)            (front-right)
- *
- *               [BD - Yana]    [Vibe - Loki]
- *               (back-left)   (back-right)
+ *   [BLRxZo House]      [Interdimensional HQ]      [WTFxZo House]
+ *    [-55, 0, 0]             [0, 0, 0]               [55, 0, 0]
+ *      42x42                  60x60                     42x42
  */
 
 /**
- * ZONE_POSITIONS — exported so other components (AgentCharacters, ChatBubbles,
- * Effects, CameraController) can reference the same positions.
- *
- * Each entry: { position: [x, y, z], size: [w, d], color, label, role }
+ * ZONE_POSITIONS — 3 zones: HQ center, BLRxZo House left, WTFxZo House right.
+ * Each entry: { position: [x, y, z], size: [w, d], color, label }
  */
 export const ZONE_POSITIONS = {
-  director: {
+  hq: {
     position: [0, 0, 0],
-    size: [50, 50],  // Large HQ zone for main director
+    size: [60, 60],
     color: "#FFD700",
-    label: "HQ",
-    role: "director",
+    label: "Interdimensional HQ",
   },
-  "captain-blrxzo": {
-    position: [-52, 0, -10],
-    size: [42, 42],  // Captain zone - Bangalore
+  "blrxzo-house": {
+    position: [-55, 0, 0],
+    size: [42, 42],
     color: "#00BFFF",
-    label: "BLRxZo",
-    role: "captain-blrxzo",
+    label: "BLRxZo House",
   },
-  "captain-wtfxzo": {
-    position: [52, 0, -10],
-    size: [42, 42],  // Captain zone - Goa
+  "wtfxzo-house": {
+    position: [55, 0, 0],
+    size: [42, 42],
     color: "#FF6347",
-    label: "WTFxZo",
-    role: "captain-wtfxzo",
-  },
-  events: {
-    position: [-38, 0, 48],
-    size: [38, 38],  // Events zone
-    color: "#FF69B4",
-    label: "Events",
-    role: "events",
-  },
-  sales: {
-    position: [38, 0, 48],
-    size: [38, 38],  // Sales zone
-    color: "#2ECC71",
-    label: "Sales",
-    role: "sales",
-  },
-  bd: {
-    position: [-42, 0, -52],
-    size: [38, 38],  // BD zone
-    color: "#E67E22",
-    label: "Business Dev",
-    role: "bd",
-  },
-  "vibe-curator": {
-    position: [42, 0, -52],
-    size: [38, 38],  // Vibe zone
-    color: "#9B59B6",
-    label: "Vibe",
-    role: "vibe-curator",
+    label: "WTFxZo House",
   },
 };
 
 /**
- * Friendly role label for display under the zone label.
+ * ZONE_HOME_OFFSETS — per-agent position offsets within their home zone.
+ * Prevents agents from stacking on top of each other.
  */
-const ROLE_LABELS = {
-  director: "Director",
-  bd: "Business Dev",
-  sales: "Sales",
-  events: "Events",
-  "vibe-curator": "Vibe Curator",
-  "captain-blrxzo": "Captain BLRxZo",
-  "captain-wtfxzo": "Captain WTFxZo",
+export const ZONE_HOME_OFFSETS = {
+  zomadprime:  [0, 0, -8],
+  suki:        [-10, 0, 5],
+  wanda:       [10, 0, 5],
+  yana:        [-10, 0, -5],
+  loki:        [8, 0, -5],
+  "blrxzo-jr": [0, 0, -5],
+  "wtfxzo-jr": [0, 0, -5],
+};
+
+/**
+ * Zone labels for display.
+ */
+const ZONE_LABELS = {
+  hq: "Interdimensional HQ",
+  "blrxzo-house": "BLRxZo House",
+  "wtfxzo-house": "WTFxZo House",
 };
 
 export default function Zones() {
   const agents = useAgentStore((state) => state.agents);
   const openSkillTree = useAgentStore((state) => state.openSkillTree);
 
+  // Derive zone status from most active resident agent
   const zones = useMemo(() => {
-    return agents
-      .map((agent) => {
-        const zone = ZONE_POSITIONS[agent.role];
-        if (!zone) return null;
+    return Object.entries(ZONE_POSITIONS).map(([zoneKey, zone]) => {
+      // Find agents whose homeZone matches this zone (nomad defaults to hq)
+      const residents = agents.filter((a) => {
+        const home = a.homeZone === "nomad" ? "hq" : a.homeZone;
+        return home === zoneKey;
+      });
 
-        return {
-          agentId: agent.id,
-          name: agent.name,
-          role: ROLE_LABELS[agent.role] || agent.role,
-          color: zone.color,
-          status: agent.status,
-          position: zone.position,
-          size: zone.size,
-          label: zone.label,
-        };
-      })
-      .filter(Boolean);
+      // Pick the most active status among residents
+      const statusPriority = ["active", "online", "idle", "standby", "dormant", "offline"];
+      let bestStatus = "offline";
+      let primaryAgentId = residents[0]?.id || null;
+
+      for (const agent of residents) {
+        if (statusPriority.indexOf(agent.status) < statusPriority.indexOf(bestStatus)) {
+          bestStatus = agent.status;
+          primaryAgentId = agent.id;
+        }
+      }
+
+      return {
+        zoneKey,
+        label: zone.label,
+        color: zone.color,
+        status: bestStatus,
+        position: zone.position,
+        size: zone.size,
+        agentId: primaryAgentId,
+        name: ZONE_LABELS[zoneKey],
+        role: zone.label,
+      };
+    });
   }, [agents]);
 
   const handleClick = (agentId) => {
-    openSkillTree(agentId);
+    if (agentId) openSkillTree(agentId);
   };
 
   return (
     <group>
       {zones.map((zone) => (
         <ZonePlatform
-          key={zone.agentId}
+          key={zone.zoneKey}
           position={zone.position}
           size={zone.size}
           agentId={zone.agentId}
