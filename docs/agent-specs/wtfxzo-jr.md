@@ -1,4 +1,4 @@
-# WTFxZo JR — House Captain (Goa)
+# WTFxZo JR — House Captain (Whitefield)
 
 > Digital operations captain for WTFxZo property. Manages financial tracking, daily reporting, staff oversight, guest flow, and maintenance triage alongside human partner Akhilesh -- with a heavy events-first orientation because 97% of revenue comes from events.
 
@@ -12,7 +12,7 @@
 | **Workspace** | `workspaces/captain-wtfxzo/` |
 | **Human Partner** | Akhilesh (@bhangbuddy.x) |
 | **Telegram ID** | `558199761` |
-| **Role** | Property operations captain for WTFxZo (Goa). 97% of revenue is from events. |
+| **Role** | Property operations captain for WTFxZo (Whitefield). 97% of revenue is from events. |
 | **Shift** | 08:00 AM -- 08:00 PM IST (12-hour digital shift) |
 | **Emoji** | Target |
 | **Model** | Claude Haiku 4.5 (via OpenClaw gateway) |
@@ -47,19 +47,19 @@
 ```
 curl -s -H "x-luma-api-key: $LUMA_API_KEY_BLRXZO"
 ```
-This is the **Bangalore** Luma API key. WTFxZo (Goa) MUST use `$LUMA_API_KEY_SFOXZO`. This is explicitly documented in `docs/DATA_SOURCES.md`:
+This is the **Bangalore** Luma API key. WTFxZo (Whitefield) MUST use `$LUMA_API_KEY_SFOXZO`. This is explicitly documented in `docs/DATA_SOURCES.md`:
 > "BLRxZo uses `$LUMA_API_KEY_BLRXZO`, WTFxZo uses `$LUMA_API_KEY_SFOXZO` -- DO NOT mix these"
 
-This means **every daily-recap run is pulling Bangalore events instead of Goa events**, or getting an empty/wrong event list. Since WTFxZo derives 97% of revenue from events, this is a severe data integrity issue -- the most important section of the most important report is showing the wrong data.
+This means **every daily-recap run is pulling Bangalore events instead of Whitefield events**, or getting an empty/wrong event list. Since WTFxZo derives 97% of revenue from events, this is a severe data integrity issue -- the most important section of the most important report is showing the wrong data.
 
-**ISSUE: Location filter strings are wrong.** The skill filters events by matching `Whitefield`, `WTFxZo`, or `Zo House Whitefield`. Whitefield is a Bangalore neighborhood, not Goa. These filters appear to be copy-pasted from a template or confused with the BLR property. The BLRxZo daily-recap filters for `Koramangala`, `BLRxZo`, `Brigade Road`, `Indiranagar` -- these are all Bangalore locations. WTFxZo should filter for Goa-specific location strings (e.g., `Goa`, `WTFxZo`, `Zo House Goa`, or whatever the Luma events use as their address).
+**ISSUE: Location filter strings are wrong.** The skill filters events by matching `Whitefield`, `WTFxZo`, or `Zo House Whitefield`. Whitefield is a Bangalore neighborhood, not Whitefield. These filters appear to be copy-pasted from a template or confused with the BLR property. The BLRxZo daily-recap filters for `Koramangala`, `BLRxZo`, `Brigade Road`, `Indiranagar` -- these are all Bangalore locations. WTFxZo should filter for Whitefield-specific location strings- **Primary Whitefieldl**: Ensure **Zo House Whitefield** operates at 5-star standards.he Luma events use as their address).
 
 **ISSUE: HEARTBEAT.md says 7PM for daily-recap, but SKILL.md says 8AM.** The HEARTBEAT.md specifies: "every day at 7:00 PM IST: Run daily-recap skill." But the SKILL.md trigger says "Heartbeat at 8AM IST daily." These contradict each other. The SOUL.md Phase 6 (EOD Wrap-Up) runs 06:30-08:00 PM, and USER.md says "7PM daily recap with event revenue summary." The correct heartbeat time should be 7PM for the EOD recap, with a separate 8AM trigger for the morning audit. The SKILL.md trigger line needs correction.
 
 #### Fix Required
 
 1. **Replace `$LUMA_API_KEY_BLRXZO` with `$LUMA_API_KEY_SFOXZO`** in the Luma API curl command (line 148 of daily-recap/SKILL.md). This is a one-line fix with maximum impact.
-2. **Replace Whitefield-based location filters** with correct Goa location strings. Audit actual Luma event data to determine the exact address strings used for WTFxZo events.
+2. **Replace Whitefield-based location filters** with correct Whitefield location strings. Audit actual Luma event data to determine the exact address strings used for WTFxZo events.
 3. **Align heartbeat timing** -- SKILL.md trigger should say "Heartbeat at 7PM IST daily (EOD recap)" to match HEARTBEAT.md and USER.md.
 
 ---
@@ -288,7 +288,7 @@ These skills are referenced in TRIGGERS.md, HANDOFF_MAP.md, and/or SOUL.md but d
 | housekeeping_sessions | Supabase table | `property='wtfxzo'` | REST API via service_role_key | staff-report (R) | R | **Unknown -- data pipeline unverified** |
 | daily_performance | Supabase table | `property='wtfxzo'` | REST API via service_role_key | staff-report (R) | R | **Unknown -- data pipeline unverified** |
 | canonical_events | Supabase table | WTFxZo events | REST API | (not directly used -- Luma API used instead) | R | Available but unused |
-| Luma API (Goa) | External API | `$LUMA_API_KEY_SFOXZO` | REST via x-luma-api-key header | daily-recap | R | **BROKEN -- wrong key in skill ($LUMA_API_KEY_BLRXZO used instead)** |
+| Luma API (Whitefield) | External API | `$LUMA_API_KEY_SFOXZO` | REST via x-luma-api-key header | daily-recap | R | **BROKEN -- wrong key in skill ($LUMA_API_KEY_BLRXZO used instead)** |
 | Eezee PMS | External system | Unknown | Unknown (no API documented) | guest-flow (R+W) | R+W | **No integration -- manual only** |
 | PM Tool | External system | zo.xyz/pm | Unknown (no API documented) | guest-flow (R+W), maintenance-triage (W) | R+W | **No integration -- manual only** |
 | WTFxZo Calendar | Google Calendar | `zo-wtf@zohouse.co` | Calendar API v3 | google-workspace (listed, not used) | R+W | **Configured but unused by any skill** |
@@ -302,15 +302,15 @@ These skills are referenced in TRIGGERS.md, HANDOFF_MAP.md, and/or SOUL.md but d
 
 **1. Wrong Luma API key in daily-recap**
 - **File:** `workspaces/captain-wtfxzo/skills/daily-recap/SKILL.md`, line 148
-- **Problem:** Uses `$LUMA_API_KEY_BLRXZO` (Bangalore) instead of `$LUMA_API_KEY_SFOXZO` (Goa)
+- **Problem:** Uses `$LUMA_API_KEY_BLRXZO` (Bangalore) instead of `$LUMA_API_KEY_SFOXZO` (Whitefield)
 - **Impact:** The events section of every daily recap is pulling Bangalore events or returning wrong data. For a property where 97% of revenue is events, this corrupts the most critical section of the most important daily report. Both Akhilesh and Samurai receive incorrect event information every morning.
 - **Fix:** Replace `$LUMA_API_KEY_BLRXZO` with `$LUMA_API_KEY_SFOXZO`. One line change, maximum impact.
 
 **2. Wrong location filter strings in daily-recap**
 - **File:** `workspaces/captain-wtfxzo/skills/daily-recap/SKILL.md`, lines 155-157
-- **Problem:** Filters for `Whitefield`, `Zo House Whitefield` -- these are Bangalore locations, not Goa. This was copy-pasted from a BLRxZo template and not updated.
-- **Impact:** Even if the API key were correct, the location filter would miss Goa events or match nothing.
-- **Fix:** Replace with Goa-specific strings (e.g., `Goa`, `WTFxZo`, `Zo House Goa`). Audit actual Luma event addresses to confirm correct filter values.
+- **Problem:** Filters for `Whitefield`, `Zo House Whitefield` -- these are Bangalore locations, not Whitefield. This was copy-pasted from a BLRxZo template and not updated.
+- **Impact:** Even if the API key were correct, the location filter would miss Whitefield events or match nothing.
+- **Fix:** Replace with Whitefield-specific strings (e.g., `Whitefield`, `WTFxZo`, `Zo House Whitefield`). Audit actual Luma event addresses to confirm correct filter values.
 
 ### HIGH (Fix This Week)
 

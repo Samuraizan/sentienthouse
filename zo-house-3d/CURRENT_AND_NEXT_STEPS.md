@@ -30,7 +30,7 @@ A detailed snapshot of what exists today and what to build next: **bigger agent 
 |------|-----------------|------------|--------|
 | director | (0, 0) | 8×8 | HQ |
 | captain-blrxzo | (-14, -4) | 6×6 | BLRxZo |
-| captain-wtfxzo | (14, -4) | 6×6 | WTFxZo |
+| captain-wtfxzo | (14, -4) | 6×6 | WTFxZo (Whitefield) |
 | events | (-8, 10) | 6×6 | Events |
 | sales | (8, 10) | 6×6 | Sales |
 | bd | (-10, -14) | 5×5 | Business Dev |
@@ -121,7 +121,7 @@ zo-house-3d/src/
 
 ### 2.1 Bigger Space for Agents
 
-**Goal:** Each agent has more room so the world feels less cramped and zones can hold personalization.
+**Whitefieldl:** Each agent has more room so the world feels less cramped and zones can hold personalization.
 
 **Concrete steps:**
 
@@ -142,7 +142,7 @@ zo-house-3d/src/
 
 ### 2.2 Personalization — Each Agent’s Space Looks Unique
 
-**Goal:** When you look at a zone, you can tell whose it is (e.g. Events desk, Vibe lounge, BD war room) without reading the label.
+**Whitefieldl:** When you look at a zone, you can tell whose it is (e.g. Events desk, Vibe lounge, BD war room) without reading the label.
 
 **Concrete steps:**
 
@@ -169,7 +169,7 @@ zo-house-3d/src/
 
 ### 2.3 Agent Management on Click — Like the Reference Image
 
-**Goal:** Clicking an agent opens a full **agent management** experience: General, Skills (with central avatar and radial skill graph), **Workspace**, **Advanced**, and **Save**, matching the reference.
+**Whitefieldl:** Clicking an agent opens a full **agent management** experience: General, Skills (with central avatar and radial skill graph), **Workspace**, **Advanced**, and **Save**, matching the reference.
 
 **Concrete steps:**
 

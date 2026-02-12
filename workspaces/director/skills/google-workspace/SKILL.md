@@ -47,7 +47,7 @@ Body:
   "start": { "dateTime": "2024-01-15T10:00:00+05:30", "timeZone": "Asia/Kolkata" },
   "end": { "dateTime": "2024-01-15T11:00:00+05:30", "timeZone": "Asia/Kolkata" },
   "attendees": [{ "email": "guest@example.com" }],
-  "location": "Zo House BLR / Zo House Goa"
+  "location": "Zo House BLR / Zo House Whitefield"
 }
 ```
 

@@ -441,7 +441,7 @@ Use `$SUPABASE_SERVICE_ROLE_KEY` for writes.
 
 ### LOW: WTFxZo Events Not Supported
 
-**Problem:** luma-sync is BLRxZo-only (`$LUMA_API_KEY_BLRXZO`). rev-tracking does not specify which sheet to write to per property. If Suki manages events at WTFxZo (Goa), the entire pipeline breaks.
+**Problem:** luma-sync is BLRxZo-only (`$LUMA_API_KEY_BLRXZO`). rev-tracking does not specify which sheet to write to per property. If Suki manages events at WTFxZo (Whitefield), the entire pipeline breaks.
 
 **Fix:** Parameterize all skills by property. luma-sync should accept a property parameter and use the correct API key. rev-tracking should route to the correct P&L sheet based on venue.
 

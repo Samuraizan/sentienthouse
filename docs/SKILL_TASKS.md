@@ -28,13 +28,13 @@ These skills exist but are broken or incomplete. Fix them first.
 - [ ] **maintenance-triage** — FIX. Create vendor directory (or reference vendor-directory skill). Align cost thresholds with financial-entry. Add SLA for vendor response.
 - [ ] **staff-report** — FIX. Verify Supabase table existence. Specify who receives report (Darshan only? + Samurai?).
 
-### WTFxZo JR (Captain — Goa)
+### WTFxZo JR (Captain — Whitefield)
 - [ ] **daily-recap** — FIX. Change Luma API key from `$LUMA_API_KEY_BLRXZO` to WTFxZo-specific key. Emphasize event schedule since 97% revenue is events.
-- [ ] **morning-audit** — FIX. Same fixes as BLRxZo version, adapted for Goa property.
+- [ ] **morning-audit** — FIX. Same fixes as BLRxZo version, adapted for Whitefield property.
 - [ ] **financial-entry** — FIX. Same fixes as BLRxZo.
 - [ ] **guest-flow** — FIX. Same fixes as BLRxZo. Add event-linked guest handling.
-- [ ] **maintenance-triage** — FIX. Same fixes, Goa-specific vendors.
-- [ ] **staff-report** — CREATE. WTFxZo doesn't have this skill. Mirror BLRxZo version for Goa.
+- [ ] **maintenance-triage** — FIX. Same fixes, Whitefield-specific vendors.
+- [ ] **staff-report** — CREATE. WTFxZo doesn't have this skill. Mirror BLRxZo version for Whitefield.
 
 ### Suki (Events)
 - [ ] **event-inquiry** — FIX. Create rate card section with actual pricing by day/time/event type. Define Typeform polling schedule (how inquiries reach Suki).
@@ -96,7 +96,7 @@ These are gaps between what SOUL.md promises and what agents can actually do.
 
 ### ZomadPrime
 - [ ] **metrics-alert** — REPORT. Auto-triggers when: occupancy < 80%, revenue drops > 10% vs prior week, blockers age > 48h, agent unresponsive > 24h. Sends alert to Samurai.
-- [ ] **cross-property-compare** — REPORT. On-demand side-by-side: BLR vs Goa occupancy, revenue, events, guest satisfaction, staff performance.
+- [ ] **cross-property-compare** — REPORT. On-demand side-by-side: BLR vs Whitefield occupancy, revenue, events, guest satisfaction, staff performance.
 - [ ] **agent-health-check** — REPORT. Which agents responded in last 24h, which cron jobs ran, which failed, which skills were triggered.
 
 ### Captains (Both)

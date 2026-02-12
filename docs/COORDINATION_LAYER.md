@@ -128,7 +128,7 @@ Clear thresholds — not vibes.
 | Skill | Category | Purpose |
 |-------|----------|---------|
 | metrics-alert | report | Auto-trigger when occupancy < 80%, revenue drops > 10% vs prior week, or blockers age > 48h |
-| cross-property-compare | report | Side-by-side BLR vs Goa: occupancy, revenue, events, guest satisfaction |
+| cross-property-compare | report | Side-by-side BLR vs Whitefield: occupancy, revenue, events, guest satisfaction |
 | agent-health-check | report | Which agents responded in last 24h, which cron jobs ran, which failed |
 
 ---
@@ -168,7 +168,7 @@ Clear thresholds — not vibes.
 
 ### WTFxZo JR (Captain) — Akhilesh's Agent
 
-**Role:** Property operations for Goa. Event-heavy property (97% revenue from events).
+**Role:** Property operations for Whitefield. Event-heavy property (97% revenue from events).
 
 **What Akhilesh needs:**
 - Same operational skills as BLRxZo JR but tuned for event-heavy property
@@ -188,7 +188,7 @@ Clear thresholds — not vibes.
 |-------|----------|---------|
 | event-prep-checklist | handoff | Auto-triggered when Suki confirms event: venue setup, AV requirements, catering, staffing needs |
 | shift-handoff | handoff | Same as BLRxZo |
-| vendor-directory | report | Goa-specific vendors |
+| vendor-directory | report | Whitefield-specific vendors |
 
 ---
 
@@ -392,7 +392,7 @@ Standardized phrases humans can use. Each agent responds to their domain.
 - "morning briefing" → Cross-property status with anomaly highlights
 - "assign [task] to [agent]" → Delegate with context
 - "how are we doing" → Key metrics snapshot
-- "compare properties" → Side-by-side BLR vs Goa
+- "compare properties" → Side-by-side BLR vs Whitefield
 - "scorecard" → Weekly agent performance
 
 ### Darshan/Akhilesh → Captains
@@ -436,7 +436,7 @@ Standardized phrases humans can use. Each agent responds to their domain.
 
 ### Phase 1: Fix the Foundation (Week 1-2)
 
-**Goal:** Make every existing skill actually work with real data.
+**Whitefieldl:** Make every existing skill actually work with real data.
 
 1. Create the Data Source Registry as a shared document all agents reference
 2. Rewrite google-workspace skill per agent with specific sheet IDs, calendars, folders
@@ -447,7 +447,7 @@ Standardized phrases humans can use. Each agent responds to their domain.
 
 ### Phase 2: Build the Handoffs (Week 3-4)
 
-**Goal:** Agents pass work to each other automatically.
+**Whitefieldl:** Agents pass work to each other automatically.
 
 7. Write `sale-to-ops` (Wanda → Captains + LOKI)
 8. Write `event-to-ops` (Suki → Captains)
@@ -458,7 +458,7 @@ Standardized phrases humans can use. Each agent responds to their domain.
 
 ### Phase 3: Add Missing Skills (Week 5-6)
 
-**Goal:** Fill the gaps between what SOUL.md promises and what skills deliver.
+**Whitefieldl:** Fill the gaps between what SOUL.md promises and what skills deliver.
 
 13. Write `day-of-event` (Suki)
 14. Write `discovery-call` (Wanda)
@@ -470,7 +470,7 @@ Standardized phrases humans can use. Each agent responds to their domain.
 
 ### Phase 4: Optimize (Week 7-8)
 
-**Goal:** Make the system proactive, not just reactive.
+**Whitefieldl:** Make the system proactive, not just reactive.
 
 20. Add anomaly detection to morning-briefing (vs yesterday, vs target, vs trend)
 21. Add auto-escalation rules (blocker > 48h → Samurai notification)

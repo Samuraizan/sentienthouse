@@ -69,7 +69,7 @@ sentienthouse/
 ├── workspaces/            Agent definitions (one folder per agent)
 │   ├── director/          ZomadPrime — SOUL.md, AGENTS.md, TOOLS.md, skills/
 │   ├── captain-blrxzo/    BLRxZo JR
-│   ├── captain-wtfxzo/    WTFxZo JR
+│   ├── captain-wtfxzo/   - **WTFxZo (Whitefield)**: 34 tasks (mostly event setup)
 │   ├── events/            Suki
 │   ├── vibe-curator/      LOKI
 │   ├── sales/             Wanda

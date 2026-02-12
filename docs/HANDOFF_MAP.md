@@ -27,7 +27,7 @@ WANDA: outreach-sequence → discovery-call → pipeline-update
 │  Sends to Captain + LOKI:           │
 │  • Guest name                       │
 │  • Check-in / check-out dates       │
-│  • Property (BLR or Goa)            │
+│  • Property (BLR or Whitefield)            │
 │  • Room type / preferences          │
 │  • Payment status                   │
 │  • Special requests                 │
@@ -70,6 +70,7 @@ Action: Welcome message + WhatsApp group + community intro
 ```
 
 ---
+**WTFxZo JR (Captain — Whitefield)**: Operations, guest experience, maintenance
 
 ### 2. Events → Operations
 

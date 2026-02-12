@@ -133,7 +133,7 @@ Boldrin's Telegram DMs route to **Suki by default** (per OpenClaw bindings in DA
 
 1. **No coordination with LOKI to avoid duplicate content.** LOKI (Vibe Curator) has a `content-calendar` skill and a `daily-vibe` skill that also produce community-facing content. The HANDOFF_MAP.md shows no content coordination flow between Wanda and LOKI. Both agents could independently post about "A Day at Zo" or spotlight the same community member on the same day. There is no shared content calendar, no deconfliction mechanism.
 
-2. **Bangalore-only focus.** The content themes and ecosystem references are entirely Bangalore-centric ("Bangalore startup ecosystem", "Why Bangalore is the best city for founders"). WTFxZo (Goa) gets no marketing attention. The skill should have property-specific positioning (Goa = retreat/creative energy vs Bangalore = startup/hustle).
+2. **Bangalore-only focus.** The content themes and ecosystem references are entirely Bangalore-centric ("Bangalore startup ecosystem", "Why Bangalore is the best city for founders"). WTFxZo (Whitefield) gets no marketing attention. The skill should have property-specific positioning (Whitefield = retreat/creative energy vs Bangalore = startup/hustle).
 
 3. **No publishing mechanism.** Like outreach-sequence, this skill generates copy but has no way to actually publish it. No LinkedIn API, no Instagram API, no integration to update listing platforms. The output is text in chat for Boldrin to manually post.
 
@@ -141,7 +141,7 @@ Boldrin's Telegram DMs route to **Suki by default** (per OpenClaw bindings in DA
 
 **Fix Required:**
 - Add a shared content calendar (Google Sheet or Supabase table) that both Wanda and LOKI reference before creating content, to avoid overlap.
-- Add WTFxZo (Goa) positioning templates alongside Bangalore content.
+- Add WTFxZo (Whitefield) positioning templates alongside Bangalore content.
 - Consider integration with LinkedIn API for direct posting (or at minimum, draft creation via Google Docs that Boldrin can review and post).
 - Long-term: add conversion tracking to measure which marketing copy drives actual bookings.
 
@@ -351,9 +351,9 @@ The skill is generic boilerplate with placeholder IDs. It works in theory but gi
 
 **9. Founder marketing is Bangalore-only.**
 
-WTFxZo (Goa property) receives no marketing attention in the founder-marketing skill.
+WTFxZo (Whitefield property) receives no marketing attention in the founder-marketing skill.
 
-**Recommendation:** Add Goa-specific positioning: retreat vibe, creative energy, beach lifestyle for founders, contrast with Bangalore's startup hustle.
+**Recommendation:** Add Whitefield-specific positioning: retreat vibe, creative energy, beach lifestyle for founders, contrast with Bangalore's startup hustle.
 
 ### P3 -- Nice to Have (Future enhancements)
 

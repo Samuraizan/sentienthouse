@@ -24,7 +24,7 @@ Samurai's DMs route to ZomadPrime (the director agent).
 |----------|-------|-------------|
 | "morning briefing" | morning-briefing | Cross-property snapshot: occupancy, revenue, events, blockers, anomalies |
 | "how are we doing" | morning-briefing | Same as above (on-demand) |
-| "compare properties" | cross-property-compare | Side-by-side BLR vs Goa metrics |
+| "compare properties" | cross-property-compare | Side-by-side BLR vs Whitefield metrics |
 | "scorecard" | weekly-scorecard | Agent + human performance scores with trends |
 | "agent status" | agent-health-check | Which agents are active, which cron jobs ran |
 
@@ -85,7 +85,7 @@ Darshan's DMs route to BLRxZo JR (Bangalore house captain).
 
 ## Akhilesh → WTFxZo JR
 
-Akhilesh's DMs route to WTFxZo JR (Goa house captain). Same skills as Darshan's agent, tuned for Goa.
+Akhilesh's DMs route to WTFxZo JR (Whitefield house captain). Same skills as Darshan's agent, tuned for Whitefield.
 
 ### Reports
 | Say This | Skill | What You Get |
@@ -222,7 +222,7 @@ Print this or pin it in each person's Telegram chat.
 ```
 SAMURAI:
   "morning briefing"     → cross-property status
-  "compare properties"   → BLR vs Goa
+  "compare properties"   → BLR vs Whitefield
   "assign X to Y"        → delegate task
   "scorecard"            → weekly performance
 

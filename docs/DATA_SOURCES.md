@@ -14,7 +14,7 @@ All stored in `.env` at repo root. Never committed to git.
 | `SUPABASE_ANON_KEY` | Read-only database access | All read queries |
 | `SUPABASE_SERVICE_ROLE_KEY` | Full database access (read + write) | Sync skills, data writes |
 | `LUMA_API_KEY_BLRXZO` | Luma calendar API — Bangalore events | luma-sync, daily-recap (BLRxZo) |
-| `LUMA_API_KEY_SFOXZO` | Luma calendar API — Goa events | luma-sync, daily-recap (WTFxZo) |
+| `LUMA_API_KEY_SFOXZO` | Luma calendar API — Whitefield events | luma-sync, daily-recap (WTFxZo) |
 | `TELEGRAM_BOT_TOKEN` | Telegram bot for all agent messaging | OpenClaw gateway |
 | `OPENCLAW_GATEWAY_TOKEN` | Gateway authentication | zo-api gateway proxy |
 | `GOOGLE_SHEET_BLRXZO` | BLRxZo P&L sheet ID | financial-entry, daily-recap |
@@ -150,7 +150,7 @@ All stored in `.env` at repo root. Never committed to git.
 **Critical notes:**
 - ALWAYS pass `after` parameter — without it, API returns only oldest 50 events
 - Pagination: check `next_cursor` in response
-- BLRxZo uses `$LUMA_API_KEY_BLRXZO`, WTFxZo uses `$LUMA_API_KEY_SFOXZO` — DO NOT mix these
+- BLRxZo uses `$LUMA_API_KEY_BLRXZO`, WTFxZo (Whitefield) uses `$LUMA_API_KEY_SFOXZO` (Note: variable name is legacy SFO, but maps to Whitefield) — DO NOT mix these
 - Rate limits apply — if you get 429, wait 60 seconds and retry
 
 ### Google Sheets API v4
